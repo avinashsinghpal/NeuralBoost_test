@@ -183,6 +183,47 @@ const stmts = {
     ORDER BY total_clicks DESC, last_clicked DESC
   `),
   
+  getPhishedByDepartment: db.prepare(`
+    SELECT 
+      c.meta_department as department,
+      COUNT(DISTINCT r.contact) as unique_people,
+      COUNT(r.id) as total_clicks,
+      SUM(COALESCE(r.click_count, 0)) as total_click_count
+    FROM recipients r
+    JOIN campaigns c ON r.campaign_id = c.id
+    WHERE r.clicked_at IS NOT NULL
+    GROUP BY c.meta_department
+    ORDER BY total_click_count DESC, unique_people DESC
+  `),
+  
+  getPhishedByDepartmentDetail: db.prepare(`
+    SELECT 
+      r.id,
+      r.contact,
+      r.name,
+      c.meta_department as department,
+      c.meta_industry as industry,
+      r.clicked_at,
+      COALESCE(r.click_count, 0) as click_count,
+      pd.device_type,
+      pd.operating_system,
+      pd.browser
+    FROM recipients r
+    JOIN campaigns c ON r.campaign_id = c.id
+    LEFT JOIN (
+      SELECT 
+        recipient_id,
+        device_type,
+        operating_system,
+        browser,
+        ROW_NUMBER() OVER (PARTITION BY recipient_id ORDER BY clicked_at DESC) as rn
+      FROM phished_details
+    ) pd ON r.id = pd.recipient_id AND pd.rn = 1
+    WHERE r.clicked_at IS NOT NULL
+      AND c.meta_department = ?
+    ORDER BY r.clicked_at DESC
+  `),
+  
   getCampaignRecipients: db.prepare(`
     SELECT * FROM recipients WHERE campaign_id = ?
   `)

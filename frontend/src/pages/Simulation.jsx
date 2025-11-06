@@ -17,6 +17,9 @@ export default function Simulation() {
   const [result, setResult] = useState(null);
   const [phished, setPhished] = useState([]);
   const [loadingPhished, setLoadingPhished] = useState(false);
+  const [phishedByDept, setPhishedByDept] = useState(null);
+  const [loadingByDept, setLoadingByDept] = useState(false);
+  const [viewMode, setViewMode] = useState('all'); // 'all' or 'byDepartment'
   const [dbView, setDbView] = useState(null);
   const [loadingDb, setLoadingDb] = useState(false);
   const [showDbView, setShowDbView] = useState(false);
@@ -49,6 +52,19 @@ export default function Simulation() {
     }
   }
 
+  async function loadPhishedByDepartment() {
+    try {
+      setLoadingByDept(true);
+      const res = await api.simulation.getPhishedByDepartment();
+      setPhishedByDept(res);
+    } catch (err) {
+      console.error('Failed to load phished by department:', err);
+      setPhishedByDept({ error: err.message });
+    } finally {
+      setLoadingByDept(false);
+    }
+  }
+
   async function loadDbView() {
     try {
       setLoadingDb(true);
@@ -64,9 +80,11 @@ export default function Simulation() {
 
   useEffect(() => {
     loadPhished();
+    loadPhishedByDepartment();
     const interval = setInterval(() => {
       console.log('[Simulation] Auto-refreshing phished list...');
       loadPhished();
+      loadPhishedByDepartment();
     }, 5000); // Refresh every 5 seconds
     return () => clearInterval(interval);
   }, []);
@@ -81,6 +99,44 @@ export default function Simulation() {
       setSelectedMessageIndex(-1);
     }
   }, [templateType, mode]);
+
+  // Set default QR code message when mode changes to QR
+  useEffect(() => {
+    if (mode === 'qr') {
+      // Always set default message when switching to QR mode (user can edit it)
+      const defaultMessage = `We have detected a login attempt to your account from a new device or location. As part of our enhanced security measures, we require immediate verification to ensure your account remains protected.
+
+This verification is mandatory and must be completed within the next 24 hours to maintain uninterrupted access to your account services.`;
+      
+      // Only set if message is empty or if switching from another mode
+      if (!message || (message.trim().length === 0)) {
+        setMessage(defaultMessage);
+      }
+      
+      // Set default subject if empty
+      if (!subject || subject.trim().length === 0) {
+        setSubject('Action Required: Verify Your Account Access - Security Update');
+      }
+    }
+  }, [mode]);
+
+  // Set default SMS message when mode changes to SMS
+  useEffect(() => {
+    if (mode === 'sms') {
+      // Set default SMS message (user can edit it)
+      const defaultSMSMessage = `Security Alert: Unusual activity detected on your account. Verify immediately to secure your account.`;
+      
+      // Only set if message is empty
+      if (!message || (message.trim().length === 0)) {
+        setMessage(defaultSMSMessage);
+      }
+      
+      // Clear subject for SMS (not used)
+      if (subject) {
+        setSubject('');
+      }
+    }
+  }, [mode]);
 
   async function loadTemplateOptions(type) {
     try {
@@ -143,8 +199,13 @@ export default function Simulation() {
           </div>
 
           <label style={{ display:'grid', gap:6 }}>
-            <span>Recipients ({mode==='sms' ? 'phone numbers' : 'emails'})</span>
-            <textarea rows={4} value={recipients} onChange={e=>setRecipients(e.target.value)} placeholder={mode==='sms'?'9876543210\n9123456780':'alice@example.com\nbob@example.com'} style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} />
+            <span>Recipients ({mode==='sms' ? 'phone numbers (e.g., +1234567890 or 1234567890)' : 'emails'})</span>
+            <textarea rows={4} value={recipients} onChange={e=>setRecipients(e.target.value)} placeholder={mode==='sms'?'+1234567890\n+19876543210\n9876543210':'alice@example.com\nbob@example.com'} style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} />
+            {mode === 'sms' && (
+              <div style={{ fontSize: 12, opacity: 0.7, padding: '8px 12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: 6, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                <strong>💡 Phone Number Format:</strong> Enter phone numbers with or without country code. US numbers can be entered as 10 digits (e.g., 9876543210) or with country code (+19876543210). International numbers should include country code (e.g., +441234567890).
+              </div>
+            )}
           </label>
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
@@ -247,10 +308,30 @@ export default function Simulation() {
            )}
 
            {mode === 'qr' && (
-             <label style={{ display:'grid', gap:6 }}>
-               <span>Landing message</span>
-               <textarea rows={5} value={message} onChange={e=>setMessage(e.target.value)} placeholder="Scan this QR to access the secure portal." style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} />
-             </label>
+             <>
+               <label style={{ display:'grid', gap:6 }}>
+                 <span>Email Subject</span>
+                 <input 
+                   value={subject} 
+                   onChange={e=>setSubject(e.target.value)} 
+                   placeholder="Email subject line" 
+                   style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} 
+                 />
+               </label>
+               <label style={{ display:'grid', gap:6 }}>
+                 <span>Email Message Body (This will be sent in the QR code email)</span>
+                 <textarea 
+                   rows={10} 
+                   value={message} 
+                   onChange={e=>setMessage(e.target.value)} 
+                   placeholder="Enter your email message here..." 
+                   style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10, fontSize:14, lineHeight:1.6 }} 
+                 />
+                 <div style={{ fontSize: 12, opacity: 0.7, marginTop: -4, padding: '8px 12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: 6, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                   <strong>💡 Tip:</strong> This message will appear in the email sent to recipients. The email will also include a QR code, case information, and verification instructions automatically.
+                 </div>
+               </label>
+             </>
            )}
 
           <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
@@ -355,11 +436,47 @@ export default function Simulation() {
 
       {/* Phished Recipients Section */}
       <div className="card" style={{ background:'#0f172a', border:'1px solid #1f2937', borderRadius: 12, padding: 16, marginTop: 16 }}>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: 12 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 12 }}>
           <h3 style={{ margin: 0 }}>Phished Recipients</h3>
-          <button type="button" onClick={loadPhished} disabled={loadingPhished} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #334155', background: 'transparent', color: '#e5e7eb', cursor: 'pointer', fontSize: 12 }}>
-            {loadingPhished ? 'Refreshing...' : '🔄 Refresh'}
-          </button>
+          <div style={{ display:'flex', gap: 8, alignItems:'center' }}>
+            <div style={{ display:'flex', gap: 4, background: '#0b1220', padding: 4, borderRadius: 8, border: '1px solid #334155' }}>
+              <button 
+                type="button" 
+                onClick={() => setViewMode('all')}
+                style={{ 
+                  padding: '6px 12px', 
+                  borderRadius: 6, 
+                  border: 'none',
+                  background: viewMode === 'all' ? 'linear-gradient(135deg,#0ea5e9,#7c3aed)' : 'transparent', 
+                  color: viewMode === 'all' ? '#fff' : '#e5e7eb', 
+                  cursor: 'pointer', 
+                  fontSize: 12,
+                  fontWeight: viewMode === 'all' ? 600 : 400
+                }}
+              >
+                All
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setViewMode('byDepartment')}
+                style={{ 
+                  padding: '6px 12px', 
+                  borderRadius: 6, 
+                  border: 'none',
+                  background: viewMode === 'byDepartment' ? 'linear-gradient(135deg,#0ea5e9,#7c3aed)' : 'transparent', 
+                  color: viewMode === 'byDepartment' ? '#fff' : '#e5e7eb', 
+                  cursor: 'pointer', 
+                  fontSize: 12,
+                  fontWeight: viewMode === 'byDepartment' ? 600 : 400
+                }}
+              >
+                By Department
+              </button>
+            </div>
+            <button type="button" onClick={() => { loadPhished(); loadPhishedByDepartment(); }} disabled={loadingPhished || loadingByDept} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #334155', background: 'transparent', color: '#e5e7eb', cursor: 'pointer', fontSize: 12 }}>
+              {loadingPhished || loadingByDept ? 'Refreshing...' : '🔄 Refresh'}
+            </button>
+          </div>
         </div>
         {/* Debug info - only show in development */}
         {process.env.NODE_ENV === 'development' && (
@@ -376,7 +493,90 @@ export default function Simulation() {
           </div>
         )}
         
-        {phished.length === 0 ? (
+        {viewMode === 'byDepartment' ? (
+          // Grouped by Department View
+          loadingByDept ? (
+            <div style={{ textAlign: 'center', padding: '24px', opacity: 0.7 }}>
+              <p>Loading department data...</p>
+            </div>
+          ) : phishedByDept?.error ? (
+            <div style={{ padding: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#fecaca' }}>
+              Error: {phishedByDept.error}
+            </div>
+          ) : phishedByDept?.grouped && Object.keys(phishedByDept.grouped).length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '24px', opacity: 0.7 }}>
+              <p>No one has clicked a phishing link yet.</p>
+              <p style={{ fontSize: 12, marginTop: 4 }}>This list updates automatically every 5 seconds.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: 20 }}>
+              {Object.values(phishedByDept?.grouped || {}).map((dept, deptIdx) => (
+                <div key={deptIdx} style={{ border: '1px solid #1f2937', borderRadius: 12, padding: 16, background: '#0b1220' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                    <div>
+                      <h4 style={{ margin: 0, color: '#cbd5e1', fontSize: 18, fontWeight: 600 }}>
+                        <Badge color="#60a5fa">{dept.department || 'Unknown'}</Badge>
+                      </h4>
+                    </div>
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#60a5fa' }}>{dept.uniquePeople}</div>
+                        <div style={{ fontSize: 11, opacity: 0.7, color: '#cbd5e1' }}>People</div>
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#ef4444' }}>{dept.totalClickCount}</div>
+                        <div style={{ fontSize: 11, opacity: 0.7, color: '#cbd5e1' }}>Total Clicks</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ textAlign: 'left', borderBottom: '2px solid #1f2937' }}>
+                          <th style={{ padding: '8px 12px', fontWeight: 600, color: '#cbd5e1' }}>Name</th>
+                          <th style={{ padding: '8px 12px', fontWeight: 600, color: '#cbd5e1' }}>Contact</th>
+                          <th style={{ padding: '8px 12px', fontWeight: 600, color: '#cbd5e1' }}>Times Phished</th>
+                          <th style={{ padding: '8px 12px', fontWeight: 600, color: '#cbd5e1' }}>Device</th>
+                          <th style={{ padding: '8px 12px', fontWeight: 600, color: '#cbd5e1' }}>OS</th>
+                          <th style={{ padding: '8px 12px', fontWeight: 600, color: '#cbd5e1' }}>Browser</th>
+                          <th style={{ padding: '8px 12px', fontWeight: 600, color: '#cbd5e1' }}>Last Clicked</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dept.people.map((p, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #111827', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#0f172a'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                            <td style={{ padding: '8px 12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#0ea5e9,#7c3aed)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 12 }}>
+                                  {(p.name || p.contact || '?').charAt(0).toUpperCase()}
+                                </div>
+                                <span style={{ fontWeight: 500 }}>{p.name || '—'}</span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '8px 12px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: 12 }}>{p.contact || '—'}</td>
+                            <td style={{ padding: '8px 12px' }}>
+                              <Badge color={p.clickCount > 1 ? '#f59e0b' : '#ef4444'}>
+                                {p.clickCount || 1} {p.clickCount === 1 ? 'time' : 'times'}
+                              </Badge>
+                            </td>
+                            <td style={{ padding: '8px 12px' }}>
+                              <Badge color="#34d399">{p.deviceType || '—'}</Badge>
+                            </td>
+                            <td style={{ padding: '8px 12px', fontSize: 11 }}>{p.operatingSystem || '—'}</td>
+                            <td style={{ padding: '8px 12px', fontSize: 11 }}>{p.browser || '—'}</td>
+                            <td style={{ padding: '8px 12px', fontSize: 11, opacity: 0.8 }}>
+                              {p.clickedAt ? (typeof p.clickedAt === 'number' ? new Date(p.clickedAt).toLocaleString() : new Date(p.clickedAt).toLocaleString()) : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : phished.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px', opacity: 0.7 }}>
             <p>No one has clicked a phishing link yet.</p>
             <p style={{ fontSize: 12, marginTop: 4 }}>This list updates automatically every 5 seconds.</p>

@@ -49,6 +49,7 @@ export const api = {
     send: (payload) => request('/simulation/send', { method: 'POST', body: JSON.stringify(payload) }),
     getPhished: () => request('/simulation/phished'),
     getAllPhishedDetails: () => request('/simulation/phished/all'),
+    getPhishedByDepartment: () => request('/simulation/phished/by-department'),
     getTemplateOptions: (type) => request(`/simulation/template-options/${type}`),
   },
   awareness: () => request('/awareness'),
@@ -60,5 +61,11 @@ export const api = {
   },
   chat: {
     ask: (prompt) => request('/chat/ask', { method: 'POST', body: JSON.stringify({ prompt }) })
+  },
+  qr: {
+    scan: (url, user_hash) => request('/qr/scan', { 
+      method: 'POST', 
+      body: JSON.stringify({ url, user_hash }) 
+    })
   }
 };

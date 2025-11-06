@@ -10,6 +10,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const channelRoutes = require('./routes/channelRoutes');
 const simulationRoutes = require('./routes/simulationRoutes');
+const qrScanRoutes = require('./routes/qrScan');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -40,6 +41,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/channels', channelRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/simulation', simulationRoutes);
+app.use('/api/qr', qrScanRoutes);
 
 // public tracking endpoint (not under /api)
 app.get('/t/:token', require('./controllers/simulationController').trackToken);
