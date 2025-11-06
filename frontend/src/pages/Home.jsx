@@ -25,6 +25,9 @@ export default function Home() {
             <NavLink to="/dashboard" style={{ textDecoration: 'none' }}>
               <button style={{ background: 'transparent', color: '#e5e7eb', border: '1px solid rgba(229,231,235,0.2)', borderRadius: 10, padding: '10px 14px', fontWeight: 800, cursor: 'pointer' }}>View Dashboard</button>
             </NavLink>
+            <NavLink to="/simulate" style={{ textDecoration: 'none' }}>
+              <button style={{ background: 'linear-gradient(135deg,#0ea5e9,#7c3aed)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontWeight: 800, boxShadow: '0 10px 24px rgba(14,165,233,0.35)', cursor: 'pointer' }}>Simulate</button>
+            </NavLink>
           </div>
           <div style={{ marginTop: 18, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
             <div style={{ minWidth: 140, padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: '#e5e7eb', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>

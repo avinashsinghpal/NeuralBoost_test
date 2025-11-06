@@ -1,4 +1,6 @@
-﻿const express = require('express');
+﻿const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+const express = require('express');
 const cors = require('cors');
 
 const analysisRoutes = require('./routes/analysisRoutes');
@@ -7,12 +9,24 @@ const awarenessRoutes = require('./routes/awarenessRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const channelRoutes = require('./routes/channelRoutes');
+const simulationRoutes = require('./routes/simulationRoutes');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
-app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'], allowedHeaders: ['Content-Type','Authorization'] }));
+app.use(cors({ 
+  origin: '*', 
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'], 
+  allowedHeaders: ['Content-Type','Authorization'],
+  credentials: false
+}));
 app.use(express.json({ limit: '1mb' }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'TRACE backend', ts: Date.now() });
@@ -25,12 +39,28 @@ app.use('/api/awareness', awarenessRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/channels', channelRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/simulation', simulationRoutes);
+
+// public tracking endpoint (not under /api)
+app.get('/t/:token', require('./controllers/simulationController').trackToken);
 
 // 404 and error handlers
 app.use(notFoundHandler);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
-  console.log(`TRACE backend listening on http://localhost:${PORT}`);
+
+// Initialize database on startup
+try {
+  require('./services/db/database');
+  console.log('[DB] Database initialized');
+} catch (dbErr) {
+  console.error('[DB] Database initialization error:', dbErr);
+}
+
+// Listen on all network interfaces (0.0.0.0) to allow access from other devices
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`TRACE backend listening on http://0.0.0.0:${PORT}`);
+  console.log(`TRACE backend accessible at http://localhost:${PORT} (local)`);
+  console.log(`TRACE backend accessible at http://<your-ip>:${PORT} (network)`);
 });
