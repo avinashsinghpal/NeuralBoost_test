@@ -9,11 +9,6 @@ import Awareness from './pages/Awareness.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Simulation from './pages/Simulation.jsx';
 
-// awareness children
-import BankPhishingAwareness from './components/Awareness/TrainingCards.jsx';
-import SbiAwareness from './components/Awareness/SbiAwareness.jsx';
-import CanaraAwareness from './components/Awareness/CanaraAwareness.jsx';
-
 function Nav() {
   return (
     <nav className="nav">
@@ -37,14 +32,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/analyze" element={<Analyze />} />
-
-          {/* Parent layout with Outlet */}
-          <Route path="/awareness" element={<Awareness />}>
-            <Route index element={<BankPhishingAwareness />} />
-            <Route path="sbi" element={<SbiAwareness />} />
-            <Route path="canara" element={<CanaraAwareness />} />
-          </Route>
-
+          {/* Awareness is now a single page (no nested children) */}
+          <Route path="/awareness" element={<Awareness />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/simulate" element={<Simulation />} />
         </Routes>
