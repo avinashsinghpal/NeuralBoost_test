@@ -27,9 +27,23 @@ export default function Simulation() {
     try {
       setLoadingPhished(true);
       const res = await api.simulation.getPhished();
+      console.log('[loadPhished] Received data:', res);
+      console.log('[loadPhished] Phished count:', res.phished?.length || 0);
+      
+      if (res.phished && res.phished.length > 0) {
+        console.log('[loadPhished] First phished item:', res.phished[0]);
+        console.log('[loadPhished] First item keys:', Object.keys(res.phished[0]));
+        console.log('[loadPhished] First item clickedAt:', res.phished[0].clickedAt);
+        console.log('[loadPhished] First item contact:', res.phished[0].contact);
+        console.log('[loadPhished] First item name:', res.phished[0].name);
+        console.log('[loadPhished] First item department:', res.phished[0].department);
+      }
+      
       setPhished(res.phished || []);
+      console.log('[loadPhished] State updated, phished.length:', res.phished?.length || 0);
     } catch (err) {
-      console.error('Failed to load phished recipients:', err);
+      console.error('[loadPhished] Failed to load phished recipients:', err);
+      console.error('[loadPhished] Error details:', err.message);
     } finally {
       setLoadingPhished(false);
     }
@@ -50,7 +64,10 @@ export default function Simulation() {
 
   useEffect(() => {
     loadPhished();
-    const interval = setInterval(loadPhished, 5000); // Refresh every 5 seconds
+    const interval = setInterval(() => {
+      console.log('[Simulation] Auto-refreshing phished list...');
+      loadPhished();
+    }, 5000); // Refresh every 5 seconds
     return () => clearInterval(interval);
   }, []);
 
@@ -264,24 +281,61 @@ export default function Simulation() {
                 )}
                 {Array.isArray(result.recipients) && result.recipients.length > 0 && (
                   <div style={{ marginTop: 8 }}>
-                    <h4>Per‑recipient tracking links</h4>
+                    <h4 style={{ marginBottom: 12, color: '#cbd5e1' }}>📋 Shareable Phishing Links</h4>
+                    <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>Copy these links to share with recipients. They work on any device (Desktop, Android, iPhone, etc.)</p>
                     <div style={{ overflowX:'auto' }}>
-                      <table style={{ width:'100%', borderCollapse:'collapse' }}>
+                      <table style={{ width:'100%', borderCollapse:'collapse', fontSize: 13 }}>
                         <thead>
-                          <tr style={{ textAlign:'left' }}>
-                            <th style={{ padding:'6px 8px', borderBottom:'1px solid #1f2937' }}>Contact</th>
-                            <th style={{ padding:'6px 8px', borderBottom:'1px solid #1f2937' }}>Name</th>
-                            <th style={{ padding:'6px 8px', borderBottom:'1px solid #1f2937' }}>Tracked URL</th>
+                          <tr style={{ textAlign:'left', background: '#0b1220' }}>
+                            <th style={{ padding:'10px 12px', borderBottom:'2px solid #1f2937', fontWeight: 600 }}>Contact</th>
+                            <th style={{ padding:'10px 12px', borderBottom:'2px solid #1f2937', fontWeight: 600 }}>Name</th>
+                            <th style={{ padding:'10px 12px', borderBottom:'2px solid #1f2937', fontWeight: 600 }}>Phishing Link</th>
+                            <th style={{ padding:'10px 12px', borderBottom:'2px solid #1f2937', fontWeight: 600 }}>Action</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {result.recipients.map((r, idx) => (
-                            <tr key={idx}>
-                              <td style={{ padding:'6px 8px', borderBottom:'1px solid #111827' }}>{r.contact}</td>
-                              <td style={{ padding:'6px 8px', borderBottom:'1px solid #111827' }}>{r.name || '—'}</td>
-                              <td style={{ padding:'6px 8px', borderBottom:'1px solid #111827', fontFamily:'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' }}>{r.trackedUrl}</td>
-                            </tr>
-                          ))}
+                          {result.recipients.map((r, idx) => {
+                            const trackedUrl = r.trackedUrl || `${result.summary?.trackedUrlBase || 'http://localhost:5001/t'}/${r.token}`;
+                            return (
+                              <tr key={idx} style={{ borderBottom:'1px solid #111827' }}>
+                                <td style={{ padding:'10px 12px' }}>{r.contact}</td>
+                                <td style={{ padding:'10px 12px' }}>{r.name || '—'}</td>
+                                <td style={{ padding:'10px 12px', fontFamily:'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: 12, wordBreak: 'break-all', maxWidth: '400px' }}>
+                                  <a href={trackedUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa', textDecoration: 'none' }}>{trackedUrl}</a>
+                                </td>
+                                <td style={{ padding:'10px 12px' }}>
+                                  <button 
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(trackedUrl).then(() => {
+                                        alert('Link copied to clipboard!');
+                                      }).catch(() => {
+                                        // Fallback for older browsers
+                                        const textArea = document.createElement('textarea');
+                                        textArea.value = trackedUrl;
+                                        document.body.appendChild(textArea);
+                                        textArea.select();
+                                        document.execCommand('copy');
+                                        document.body.removeChild(textArea);
+                                        alert('Link copied to clipboard!');
+                                      });
+                                    }}
+                                    style={{ 
+                                      background: 'linear-gradient(135deg, #0ea5e9, #7c3aed)', 
+                                      color: '#fff', 
+                                      border: 'none', 
+                                      borderRadius: 6, 
+                                      padding: '6px 12px', 
+                                      cursor: 'pointer',
+                                      fontSize: 12,
+                                      fontWeight: 600
+                                    }}
+                                  >
+                                    📋 Copy
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -307,6 +361,21 @@ export default function Simulation() {
             {loadingPhished ? 'Refreshing...' : '🔄 Refresh'}
           </button>
         </div>
+        {/* Debug info - only show in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ marginBottom: 12, padding: '8px 12px', background: '#0b1220', borderRadius: 8, fontSize: 11, fontFamily: 'monospace' }}>
+            <strong>Debug:</strong> phished.length = {phished.length} | loadingPhished = {String(loadingPhished)}
+            {phished.length > 0 && (
+              <details style={{ marginTop: 8 }}>
+                <summary style={{ cursor: 'pointer', color: '#60a5fa' }}>View raw data</summary>
+                <pre style={{ marginTop: 8, overflow: 'auto', maxHeight: 200, fontSize: 10 }}>
+                  {JSON.stringify(phished, null, 2)}
+                </pre>
+              </details>
+            )}
+          </div>
+        )}
+        
         {phished.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px', opacity: 0.7 }}>
             <p>No one has clicked a phishing link yet.</p>
@@ -321,42 +390,57 @@ export default function Simulation() {
                    <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Contact</th>
                    <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Department</th>
                    <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Industry</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Device</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>OS</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Browser</th>
                    <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Clicked At</th>
                    <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Times Phished</th>
                    <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Status</th>
                  </tr>
                </thead>
               <tbody>
-                {phished.map((p, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #111827', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#0b1220'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '10px 12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#0ea5e9,#7c3aed)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14 }}>
-                          {(p.name || p.contact || '?').charAt(0).toUpperCase()}
+                {phished.map((p, idx) => {
+                  console.log(`[Table] Rendering row ${idx}:`, p);
+                  return (
+                    <tr key={idx} style={{ borderBottom: '1px solid #111827', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#0b1220'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                      <td style={{ padding: '10px 12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#0ea5e9,#7c3aed)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14 }}>
+                            {(p.name || p.contact || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <span style={{ fontWeight: 500 }}>{p.name || '—'}</span>
                         </div>
-                        <span style={{ fontWeight: 500 }}>{p.name || '—'}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '10px 12px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: 13 }}>{p.contact}</td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <Badge color="#60a5fa">{p.department || '—'}</Badge>
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <Badge color="#a78bfa">{p.industry || '—'}</Badge>
-                    </td>
-                     <td style={{ padding: '10px 12px', fontSize: 12, opacity: 0.8 }}>
-                       {new Date(p.clickedAt).toLocaleString()}
-                     </td>
-                     <td style={{ padding: '10px 12px' }}>
-                       <Badge color={p.clickCount > 1 ? '#f59e0b' : '#ef4444'}>
-                         {p.clickCount || 1} {p.clickCount === 1 ? 'time' : 'times'}
-                       </Badge>
-                     </td>
-                     <td style={{ padding: '10px 12px' }}>
-                       <Badge color="#ef4444">Phished</Badge>
-                     </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: 13 }}>{p.contact || '—'}</td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Badge color="#60a5fa">{p.department || '—'}</Badge>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Badge color="#a78bfa">{p.industry || '—'}</Badge>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Badge color="#34d399">{p.deviceType || p.details?.deviceType || '—'}</Badge>
+                      </td>
+                      <td style={{ padding: '10px 12px', fontSize: 12 }}>
+                        {p.operatingSystem || p.details?.os || '—'}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontSize: 12 }}>
+                        {p.browser || p.details?.browser || '—'}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, opacity: 0.8 }}>
+                        {p.clickedAt ? (typeof p.clickedAt === 'number' ? new Date(p.clickedAt).toLocaleString() : new Date(p.clickedAt).toLocaleString()) : '—'}
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Badge color={p.clickCount > 1 ? '#f59e0b' : '#ef4444'}>
+                          {p.clickCount || 1} {p.clickCount === 1 ? 'time' : 'times'}
+                        </Badge>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Badge color="#ef4444">Phished</Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

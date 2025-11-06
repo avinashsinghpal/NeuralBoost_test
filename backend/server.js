@@ -58,6 +58,9 @@ try {
   console.error('[DB] Database initialization error:', dbErr);
 }
 
-app.listen(PORT, () => {
-  console.log(`TRACE backend listening on http://localhost:${PORT}`);
+// Listen on all network interfaces (0.0.0.0) to allow access from other devices
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`TRACE backend listening on http://0.0.0.0:${PORT}`);
+  console.log(`TRACE backend accessible at http://localhost:${PORT} (local)`);
+  console.log(`TRACE backend accessible at http://<your-ip>:${PORT} (network)`);
 });

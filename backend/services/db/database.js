@@ -47,6 +47,9 @@ db.exec(`
     recipient_id INTEGER NOT NULL,
     ip_address TEXT,
     user_agent TEXT,
+    device_type TEXT,
+    operating_system TEXT,
+    browser TEXT,
     clicked_at INTEGER NOT NULL,
     FOREIGN KEY (recipient_id) REFERENCES recipients(id) ON DELETE CASCADE
   );
@@ -74,6 +77,31 @@ try {
   }
 }
 
+// Migration: Add device info columns to phished_details if they don't exist
+try {
+  const test = db.prepare('SELECT device_type FROM phished_details LIMIT 1');
+  test.get();
+  console.log('[DB] ✅ device_type column exists');
+} catch (e) {
+  if (e.message && e.message.includes('no such column')) {
+    console.log('[DB] ⚠️ Adding device info columns to phished_details table...');
+    try {
+      db.exec('ALTER TABLE phished_details ADD COLUMN device_type TEXT');
+      console.log('[DB] ✅ Added device_type column');
+      db.exec('ALTER TABLE phished_details ADD COLUMN operating_system TEXT');
+      console.log('[DB] ✅ Added operating_system column');
+      db.exec('ALTER TABLE phished_details ADD COLUMN browser TEXT');
+      console.log('[DB] ✅ Added browser column');
+      console.log('[DB] ✅ Device info migration completed successfully');
+    } catch (migErr) {
+      console.error('[DB] ❌ Device info migration error:', migErr.message);
+      console.error('[DB] ❌ Migration error stack:', migErr.stack);
+    }
+  } else {
+    console.error('[DB] ❌ Error checking device_type column:', e.message);
+  }
+}
+
 // Prepared statements for better performance
 const stmts = {
   insertCampaign: db.prepare(`
@@ -95,8 +123,8 @@ const stmts = {
   `),
   
   insertPhishedDetail: db.prepare(`
-    INSERT INTO phished_details (recipient_id, ip_address, user_agent, clicked_at)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO phished_details (recipient_id, ip_address, user_agent, device_type, operating_system, browser, clicked_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `),
   
   getRecipientByToken: db.prepare(`
@@ -117,10 +145,24 @@ const stmts = {
       c.meta_industry as industry,
       c.mode,
       pd.ip_address,
-      pd.user_agent
+      pd.user_agent,
+      pd.device_type,
+      pd.operating_system,
+      pd.browser
     FROM recipients r
     JOIN campaigns c ON r.campaign_id = c.id
-    LEFT JOIN phished_details pd ON r.id = pd.recipient_id
+    LEFT JOIN (
+      SELECT 
+        recipient_id,
+        ip_address,
+        user_agent,
+        device_type,
+        operating_system,
+        browser,
+        clicked_at,
+        ROW_NUMBER() OVER (PARTITION BY recipient_id ORDER BY clicked_at DESC) as rn
+      FROM phished_details
+    ) pd ON r.id = pd.recipient_id AND pd.rn = 1
     WHERE r.clicked_at IS NOT NULL
     ORDER BY r.clicked_at DESC
   `),
