@@ -1,0 +1,14 @@
+{
+  "ignore": [
+    "services/db/data/**",
+    "**/data/**",
+    "node_modules/**",
+    "*.json",
+    "*.db",
+    "*.db-shm",
+    "*.db-wal"
+  ],
+  "ext": "js",
+  "delay": 2000
+}
+

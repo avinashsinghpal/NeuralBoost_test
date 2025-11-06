@@ -1,0 +1,61 @@
+[
+  {
+    "token": "274624e5763e7d940950",
+    "type": "click",
+    "ts": 1762448061399,
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+    "ip": "::1"
+  },
+  {
+    "token": "cf2d847fd39ee45dcec918d166c93e40",
+    "type": "click",
+    "ts": 1762450143144,
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "contact": "google@example.com",
+    "campaignId": "dab0a0c2-a39c-40b7-b690-19ed2a17e7a7",
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    }
+  },
+  {
+    "token": "30e1268ad6c2e0b6ce338cf083a2c101",
+    "type": "click",
+    "ts": 1762450371314,
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "contact": "lavi26052005@gmail.com",
+    "campaignId": "3973fe82-3752-47ad-86d2-34fe5267d49d",
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    }
+  },
+  {
+    "token": "3175ef09084324b3878ae41bb1a1b2b3",
+    "type": "click",
+    "ts": 1762450425255,
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "contact": "lavish.dev.work@gmail.com",
+    "campaignId": "3f4cb069-7140-4ac6-b0f2-edffbda9e8a3",
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    }
+  },
+  {
+    "token": "3175ef09084324b3878ae41bb1a1b2b3",
+    "type": "click",
+    "ts": 1762450784752,
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+    "ip": "::1",
+    "contact": "lavish.dev.work@gmail.com",
+    "campaignId": "3f4cb069-7140-4ac6-b0f2-edffbda9e8a3",
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    }
+  }
+]

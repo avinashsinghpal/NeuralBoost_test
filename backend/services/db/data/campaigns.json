@@ -1,0 +1,900 @@
+[
+  {
+    "id": "702b9cfe-bed8-4805-994d-56a8242bc91b",
+    "createdAt": 1762448046553,
+    "mode": "email",
+    "recipients": [
+      "alice@example.com",
+      "bob@example.com"
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "token": "274624e5763e7d940950fab050053c50",
+    "trackedUrl": "http://localhost:5001/t/274624e5763e7d940950fab050053c50"
+  },
+  {
+    "id": "82fb4ed3-4685-4c59-99ee-ce38e4d2ba5c",
+    "createdAt": 1762449294819,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "bb277372bf5953c00abd87e87d7b17f4",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "ed561b66-ebe5-4cc2-a763-70df6fba6386",
+    "createdAt": 1762449295398,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "0e639ef21c4e2c16ee7ed6b412d9ca7d",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "e54d493c-63da-4571-9b6b-b87e80be820d",
+    "createdAt": 1762449302985,
+    "mode": "qr",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "9db587409b44bd2041b9f5b23a672593",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "b5fe07af-3101-4174-9f0d-26498f3876b3",
+    "createdAt": 1762449325381,
+    "mode": "qr",
+    "recipients": [
+      {
+        "contact": "lavi26052005.com",
+        "token": "fbf2e0bfa3ae4427c84908143d679259",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "3f471bd4-52c0-4572-b23d-9843fc003d59",
+    "createdAt": 1762449358751,
+    "mode": "sms",
+    "recipients": [
+      {
+        "contact": "lavi26052005.com",
+        "token": "740c6e460f4e3fec33b9f03047226d52",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "2d236a5e-b37e-4f8b-889e-ed85feca16a5",
+    "createdAt": 1762449363939,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "lavi26052005.com",
+        "token": "5e31d44ff55dc19effad329195d8ec83",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "32690692-4848-4534-b1d8-01c63830bab5",
+    "createdAt": 1762449364559,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "lavi26052005.com",
+        "token": "d21f4a379b1c856a31417ed052b7e14b",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "6fc0cdc1-c3d6-4b12-8851-0244dbfb891c",
+    "createdAt": 1762449521174,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "lavi26052005.com",
+        "token": "c39eb0497c210049a8dee1f0b1591980",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "1cd35476-313c-4ed1-b3f9-d71307eaa7fa",
+    "createdAt": 1762449521711,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "lavi26052005.com",
+        "token": "24f712305f12eee166ecec6f602734e8",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "6f05a28e-7f88-4a0f-8f7e-6a55bff89c56",
+    "createdAt": 1762449550635,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "ab7601f891d9b7ee2b0140c9d8539f62",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided.\nhttps://gmail.coom"
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "9d057940-5a4e-4ab1-be60-5852db75ce98",
+    "createdAt": 1762449551250,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "190e7ec2bb2e40338b8d741e7284a4e7",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided.\nhttps://gmail.coom"
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "bd035920-2701-4d59-8974-dda4b1409d4d",
+    "createdAt": 1762449557823,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "0183c282d0a697da74d1789efe24bb63",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided.\nhttps://gmail.coom"
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "2b9c95fb-d6a3-43fc-860c-5343b73c9440",
+    "createdAt": 1762449558366,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "c8a24519e705d0f7375158fe958f78e5",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided.\nhttps://gmail.coom"
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "3580d8f0-c1c5-48d6-994b-2ddec8962b99",
+    "createdAt": 1762449570215,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "74dd18c8810f9617d95030f25bef71e4",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided.\nhttps://gmail.coom"
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "89906a04-dfde-4cda-9903-b9c197f93dcf",
+    "createdAt": 1762449570815,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "3e25e0422281ae195e24dd5840d17198",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided.\nhttps://gmail.coom"
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "1c307b6e-e84a-4884-af8d-23afeec651a7",
+    "createdAt": 1762449826238,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "1c9957b63e8b47abd2ba529003c1db4e",
+        "status": "queued"
+      },
+      {
+        "contact": "bob@example.com",
+        "token": "8c496f94d9ee54d4125dbfa056b3cebb",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "9e5950a5-5f68-4e7a-a948-6d55ee743a80",
+    "createdAt": 1762449826775,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "cc072ea175512d844c3ea50f0a433ea3",
+        "status": "queued"
+      },
+      {
+        "contact": "bob@example.com",
+        "token": "3a9e6738f4441327a38f417aa94657b7",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "9eaacec6-f9e0-4817-9624-95dcde806ae4",
+    "createdAt": 1762449838569,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "5eeebca9dddb47e5ed1fe62d9fdf1037",
+        "status": "queued"
+      },
+      {
+        "contact": "bob@example.com",
+        "token": "6a64b08a8be1304b653591a28a4d1cc3",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "f07441b9-73c5-479b-a6a3-de94b4e883ae",
+    "createdAt": 1762449839193,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "5bc613e130eb54baf00d69108e09de5a",
+        "status": "queued"
+      },
+      {
+        "contact": "bob@example.com",
+        "token": "fe4e5ae39019c15113c7c6aa06858237",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "5e99c2c7-9de4-4815-9be1-8f5093b470e4",
+    "createdAt": 1762449847846,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "a5f152a4a925d6390b1f7496710d9042",
+        "status": "queued"
+      },
+      {
+        "contact": "bob@example.com",
+        "token": "8f7c3d3453f173cd62a16ddb04a2143d",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "0d856771-5652-4d25-8ca8-59c79dd8b629",
+    "createdAt": 1762449848459,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "ce7ded41183184b2f039259f5ca9e7ed",
+        "status": "queued"
+      },
+      {
+        "contact": "bob@example.com",
+        "token": "3f20dccbcdcfd460afc9183a6d02637a",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "31235b04-f09b-4354-856b-e88951e63784",
+    "createdAt": 1762449851827,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "ed36fff0f582eb6513dc7dab15e9445e",
+        "status": "queued"
+      },
+      {
+        "contact": "bob@example.com",
+        "token": "9faf11d68f01b6349fa309a614f63292",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "72f718ef-b604-40b9-be51-a45980ed981a",
+    "createdAt": 1762450006477,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "bf3484c7da90cdb6155a3cda1f3b1f82",
+        "status": "queued"
+      },
+      {
+        "contact": "bob@example.com",
+        "token": "66274496f284cff069b72dd11c8715cc",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "03666f69-d076-404b-9b2d-cc9d3117f738",
+    "createdAt": 1762450007045,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "476a522ea0bcfa69a9875022c176a7b0",
+        "status": "queued"
+      },
+      {
+        "contact": "bob@example.com",
+        "token": "2b7ec17372e1079add9944a69273664b",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "6d007587-66d6-449a-be0b-ca5f7ce6b9cc",
+    "createdAt": 1762450027033,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "51fe9069c7bf71792eb2dcfc3a35c75a",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "a701e090-f322-4d84-a985-1d0e4b380d75",
+    "createdAt": 1762450027584,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "alice@example.com",
+        "token": "eb9992eace7f74abe74a24635a7274ab",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "0c7a6657-afd6-49d4-a412-d57653de2a84",
+    "createdAt": 1762450095197,
+    "mode": "qr",
+    "recipients": [
+      {
+        "contact": "google@example.com",
+        "token": "22ca6274d78c4b926046ed9dee823c53",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "dab0a0c2-a39c-40b7-b690-19ed2a17e7a7",
+    "createdAt": 1762450121859,
+    "mode": "sms",
+    "recipients": [
+      {
+        "contact": "google@example.com",
+        "token": "cf2d847fd39ee45dcec918d166c93e40",
+        "status": "queued",
+        "clickedAt": 1762450143147,
+        "details": {
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+          "ip": "::1"
+        }
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "002fc2fb-728e-4392-b671-5a44688b7e6e",
+    "createdAt": 1762450211102,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "mishra@example.com",
+        "token": "7831a5283a435d5c73e307c52acb6b79",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "002fc2fb-728e-4392-b671-5a44688b7e6e",
+    "createdAt": 1762450211102,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "mishra@example.com",
+        "token": "7831a5283a435d5c73e307c52acb6b79",
+        "status": "delivered"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "1f72e8e7-3736-4537-b919-91683f3fcef4",
+    "createdAt": 1762450267724,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "gauravmishraokok@gmail.com",
+        "token": "0fc1b059d9fd906584bc718a277289b5",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "1f72e8e7-3736-4537-b919-91683f3fcef4",
+    "createdAt": 1762450267724,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "gauravmishraokok@gmail.com",
+        "token": "0fc1b059d9fd906584bc718a277289b5",
+        "status": "delivered"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "3973fe82-3752-47ad-86d2-34fe5267d49d",
+    "createdAt": 1762450359581,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "lavi26052005@gmail.com",
+        "token": "30e1268ad6c2e0b6ce338cf083a2c101",
+        "status": "queued",
+        "clickedAt": 1762450371317,
+        "details": {
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+          "ip": "::1"
+        }
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "3973fe82-3752-47ad-86d2-34fe5267d49d",
+    "createdAt": 1762450359581,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "lavi26052005@gmail.com",
+        "token": "30e1268ad6c2e0b6ce338cf083a2c101",
+        "status": "delivered"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "3f4cb069-7140-4ac6-b0f2-edffbda9e8a3",
+    "createdAt": 1762450401572,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "lavish.dev.work@gmail.com",
+        "token": "3175ef09084324b3878ae41bb1a1b2b3",
+        "status": "queued",
+        "clickedAt": 1762450784754,
+        "details": {
+          "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+          "ip": "::1"
+        }
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "3f4cb069-7140-4ac6-b0f2-edffbda9e8a3",
+    "createdAt": 1762450401572,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "lavish.dev.work@gmail.com",
+        "token": "3175ef09084324b3878ae41bb1a1b2b3",
+        "status": "delivered"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "d13898e6-611d-4b49-a117-32374811b8d0",
+    "createdAt": 1762450464058,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "avinashunita@gmail.com",
+        "token": "642c2fae984642828e998a9c3c14cff3",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "d13898e6-611d-4b49-a117-32374811b8d0",
+    "createdAt": 1762450464058,
+    "mode": "email",
+    "recipients": [
+      {
+        "contact": "avinashunita@gmail.com",
+        "token": "642c2fae984642828e998a9c3c14cff3",
+        "status": "delivered"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  },
+  {
+    "id": "2910eca3-a503-4380-adf2-a1a9476cf6db",
+    "createdAt": 1762450724030,
+    "mode": "sms",
+    "recipients": [
+      {
+        "contact": "9457825314",
+        "token": "08562721099c890b0da8cbea171d1299",
+        "status": "queued"
+      }
+    ],
+    "meta": {
+      "department": "Finance",
+      "industry": "IT Services"
+    },
+    "content": {
+      "subject": "Urgent: Account Verification Required",
+      "message": "Please verify your account immediately at the link provided."
+    },
+    "trackedUrlBase": "http://localhost:5001/t"
+  }
+]
