@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "trace",
   "private": true,
   "version": "0.1.0",
@@ -10,5 +10,8 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "localtunnel": "^1.9.2"
   }
 }

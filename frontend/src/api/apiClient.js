@@ -13,7 +13,8 @@ export const api = {
   health: () => request('/health'),
   analysis: {
     list: () => request('/analysis'),
-    run: (payload) => request('/analysis', { method: 'POST', body: JSON.stringify(payload) })
+    runLegacy: (payload) => request('/analysis', { method: 'POST', body: JSON.stringify(payload) }),
+    runEmail: (payload) => request('/analyze/email', { method: 'POST', body: JSON.stringify(payload) })
   },
   awareness: () => request('/awareness'),
   dashboard: () => request('/dashboard'),
