@@ -2,6 +2,7 @@
 import { api } from '../api/apiClient';
 import useFetch from '../hooks/useFetch';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, RadialBarChart, RadialBar, PolarAngleAxis, BarChart, Bar, CartesianGrid, Legend } from 'recharts';
+import ParticleCanvas from '../components/Shared/ParticleCanvas';
 
 function monthName(idx) { return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][idx-1]; }
 
@@ -48,7 +49,9 @@ export default function Dashboard() {
   }
 
   return (
-    <section className="page">
+    <section className="page" style={{ position: 'relative', zIndex: 1 }}>
+      <ParticleCanvas />
+      <div style={{ position: 'relative', zIndex: 1 }}>
       <h2>Threat Dashboard</h2>
       {loading && 'Loading…'}
       {!loading && (
@@ -125,6 +128,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      </div>
     </section>
   );
 }
@@ -235,3 +239,4 @@ function ThreatMapCard({ geo, project, labelForCountry }) {
     </div>
   );
 }
+

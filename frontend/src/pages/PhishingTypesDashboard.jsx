@@ -8,6 +8,7 @@ import AnalyticsModal from '../components/PhishingTypes/AnalyticsModal';
 import ModeSwitcher from '../components/PhishingTypes/ModeSwitcher';
 import TypesFlow from '../components/PhishingTypes/TypesFlow';
 import FiltersBar from '../components/PhishingTypes/FiltersBar';
+import ParticleCanvas from '../components/Shared/ParticleCanvas';
 
 export default function PhishingTypesDashboard() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -85,8 +86,9 @@ export default function PhishingTypesDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors" style={{ position: 'relative', zIndex: 1 }}>
+      <ParticleCanvas />
+      <div className="container mx-auto px-4 py-8 max-w-7xl" style={{ position: 'relative', zIndex: 1 }}>
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
