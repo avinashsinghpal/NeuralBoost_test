@@ -37,6 +37,7 @@ db.exec(`
     token TEXT UNIQUE NOT NULL,
     status TEXT DEFAULT 'queued',
     clicked_at INTEGER,
+    click_count INTEGER DEFAULT 0,
     error TEXT,
     FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
   );
@@ -56,6 +57,23 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_phished_recipient ON phished_details(recipient_id);
 `);
 
+// Migration: Add click_count column if it doesn't exist
+try {
+  const test = db.prepare('SELECT click_count FROM recipients LIMIT 1');
+  test.get();
+} catch (e) {
+  if (e.message && e.message.includes('no such column')) {
+    console.log('[DB] Adding click_count column to recipients table...');
+    try {
+      db.exec('ALTER TABLE recipients ADD COLUMN click_count INTEGER DEFAULT 0');
+      db.exec('UPDATE recipients SET click_count = 1 WHERE clicked_at IS NOT NULL');
+      console.log('[DB] Migration completed successfully');
+    } catch (migErr) {
+      console.error('[DB] Migration error:', migErr.message);
+    }
+  }
+}
+
 // Prepared statements for better performance
 const stmts = {
   insertCampaign: db.prepare(`
@@ -73,7 +91,7 @@ const stmts = {
   `),
   
   markRecipientClicked: db.prepare(`
-    UPDATE recipients SET clicked_at = ? WHERE token = ?
+    UPDATE recipients SET clicked_at = ?, click_count = click_count + 1 WHERE token = ?
   `),
   
   insertPhishedDetail: db.prepare(`
@@ -94,6 +112,7 @@ const stmts = {
       r.contact,
       r.name,
       r.clicked_at,
+      COALESCE(r.click_count, 0) as click_count,
       c.meta_department as department,
       c.meta_industry as industry,
       c.mode,
@@ -104,6 +123,22 @@ const stmts = {
     LEFT JOIN phished_details pd ON r.id = pd.recipient_id
     WHERE r.clicked_at IS NOT NULL
     ORDER BY r.clicked_at DESC
+  `),
+  
+  getPhishedByContact: db.prepare(`
+    SELECT 
+      r.contact,
+      r.name,
+      COUNT(DISTINCT r.campaign_id) as total_campaigns,
+      SUM(COALESCE(r.click_count, 0)) as total_clicks,
+      MAX(r.clicked_at) as last_clicked,
+      MAX(c.meta_department) as department,
+      MAX(c.meta_industry) as industry
+    FROM recipients r
+    JOIN campaigns c ON r.campaign_id = c.id
+    WHERE r.clicked_at IS NOT NULL
+    GROUP BY r.contact, r.name
+    ORDER BY total_clicks DESC, last_clicked DESC
   `),
   
   getCampaignRecipients: db.prepare(`

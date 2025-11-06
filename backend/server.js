@@ -49,6 +49,15 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5001;
+
+// Initialize database on startup
+try {
+  require('./services/db/database');
+  console.log('[DB] Database initialized');
+} catch (dbErr) {
+  console.error('[DB] Database initialization error:', dbErr);
+}
+
 app.listen(PORT, () => {
   console.log(`TRACE backend listening on http://localhost:${PORT}`);
 });

@@ -60,22 +60,28 @@ function markRecipientClicked(token, details) {
 }
 
 function getPhishedRecipients() {
-  const rows = stmts.getAllPhished.all();
-  return rows.map(row => ({
-    id: row.id,
-    contact: row.contact,
-    name: row.name,
-    department: row.department,
-    industry: row.industry,
-    clickedAt: row.clicked_at,
-    mode: row.mode,
-    ipAddress: row.ip_address,
-    userAgent: row.user_agent,
-    details: {
-      ip: row.ip_address,
-      ua: row.user_agent
-    }
-  }));
+  try {
+    const rows = stmts.getAllPhished.all();
+    return rows.map(row => ({
+      id: row.id,
+      contact: row.contact,
+      name: row.name,
+      department: row.department,
+      industry: row.industry,
+      clickedAt: row.clicked_at,
+      clickCount: row.click_count || 0,
+      mode: row.mode,
+      ipAddress: row.ip_address,
+      userAgent: row.user_agent,
+      details: {
+        ip: row.ip_address,
+        ua: row.user_agent
+      }
+    }));
+  } catch (err) {
+    console.error('[getPhishedRecipients] Error:', err);
+    return [];
+  }
 }
 
 module.exports = { saveCampaign, saveEvent, getTrackedUrlBase, findRecipientByToken, markRecipientClicked, getPhishedRecipients };

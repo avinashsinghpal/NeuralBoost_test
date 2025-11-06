@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const QRCode = require('qrcode');
 const { saveCampaign, saveEvent, getTrackedUrlBase, findRecipientByToken, markRecipientClicked, getPhishedRecipients } = require('../services/db/phishStore');
 const { sendEmail } = require('../services/smtp/mailer');
+const { getTemplate, getRandomTemplate, replacePlaceholders } = require('../services/phishing/templates');
 
 function generateToken() {
   return crypto.randomBytes(16).toString('hex');
@@ -59,15 +60,33 @@ async function sendSimulation(req, res, next) {
       for (const r of campaign.recipients) {
         try {
           const trackedUrl = `${base}/t/${r.token}`;
-          const subject = content.subject || 'Security Notice';
-          const text = `${content.message || ''}\n\nVerify here: ${trackedUrl}`;
-          const html = `
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111">
-              <p>${(content.message || '').replace(/\n/g,'<br/>')}</p>
-              <p><a href="${trackedUrl}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none">Verify</a></p>
-              <p style="color:#666">If the button doesn't work, copy this link:<br/><span>${trackedUrl}</span></p>
-            </div>`;
-          console.log('[Simulation] Sending email to:', r.contact);
+          
+          // Use realistic phishing template
+          let subject, html, text;
+          const templateType = content.templateType || 'random'; // banking, tech_support, invoice, package, social_media, or random
+          try {
+            console.log('[Simulation] Using template type:', templateType);
+            const template = templateType === 'random' ? getRandomTemplate() : getTemplate(templateType);
+            const emailContent = replacePlaceholders(template, trackedUrl, content.message || '');
+            
+            subject = content.subject || emailContent.subject;
+            html = emailContent.html;
+            text = emailContent.text;
+            console.log('[Simulation] Template generated successfully, subject:', subject);
+          } catch (templateErr) {
+            console.error('[Simulation] Template error:', templateErr);
+            // Fallback to simple email
+            subject = content.subject || 'Security Notice';
+            text = `${content.message || 'Please verify your account'}\n\nVerify here: ${trackedUrl}`;
+            html = `
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#111">
+                <p>${(content.message || 'Please verify your account').replace(/\n/g,'<br/>')}</p>
+                <p><a href="${trackedUrl}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none">Verify</a></p>
+                <p style="color:#666">If the button doesn't work, copy this link:<br/><span>${trackedUrl}</span></p>
+              </div>`;
+          }
+          
+          console.log('[Simulation] Sending email to:', r.contact, 'using template:', templateType);
           await sendEmail({ to: r.contact, subject, text, html });
           
           // Update recipient status in database
@@ -187,8 +206,17 @@ async function getPhished(req, res, next) {
 
 async function getAllPhishedDetails(req, res, next) {
   try {
+    console.log('[getAllPhishedDetails] Fetching phished recipients...');
     const { stmts } = require('../services/db/database');
-    const phished = stmts.getAllPhished.all();
+    
+    let phished = [];
+    try {
+      phished = stmts.getAllPhished.all();
+      console.log('[getAllPhishedDetails] Found', phished.length, 'phished recipients');
+    } catch (dbErr) {
+      console.error('[getAllPhishedDetails] Database error:', dbErr);
+      return res.status(500).json({ success: false, error: 'Database query failed: ' + dbErr.message });
+    }
     
     const formatted = phished.map(row => ({
       id: row.id,
@@ -199,16 +227,37 @@ async function getAllPhishedDetails(req, res, next) {
       mode: row.mode,
       clickedAt: new Date(row.clicked_at).toISOString(),
       clickedAtFormatted: new Date(row.clicked_at).toLocaleString(),
+      clickCount: row.click_count || 0,
       ipAddress: row.ip_address || '—',
       userAgent: row.user_agent || '—'
+    }));
+    
+    // Get aggregated stats by contact
+    let byContact = [];
+    try {
+      byContact = stmts.getPhishedByContact.all();
+      console.log('[getAllPhishedDetails] Found', byContact.length, 'unique contacts');
+    } catch (dbErr) {
+      console.error('[getAllPhishedDetails] Error getting by contact:', dbErr);
+    }
+    
+    const contactStats = byContact.map(row => ({
+      contact: row.contact,
+      name: row.name || '—',
+      department: row.department || '—',
+      industry: row.industry || '—',
+      totalCampaigns: row.total_campaigns || 0,
+      totalClicks: row.total_clicks || 0,
+      lastClicked: new Date(row.last_clicked).toLocaleString()
     }));
     
     return res.json({ 
       success: true, 
       data: formatted, 
       count: formatted.length,
+      byContact: contactStats,
       table: {
-        headers: ['ID', 'Name', 'Contact', 'Department', 'Industry', 'Mode', 'Clicked At', 'IP Address', 'User Agent'],
+        headers: ['ID', 'Name', 'Contact', 'Department', 'Industry', 'Mode', 'Clicked At', 'Times Phished', 'IP Address', 'User Agent'],
         rows: formatted.map(p => [
           p.id,
           p.name,
@@ -217,17 +266,30 @@ async function getAllPhishedDetails(req, res, next) {
           p.industry,
           p.mode,
           p.clickedAtFormatted,
+          p.clickCount,
           p.ipAddress,
           p.userAgent
         ])
       }
     });
   } catch (err) {
+    console.error('[getAllPhishedDetails] Error:', err);
     next(err);
   }
 }
 
-module.exports = { sendSimulation, trackToken, phishedLanding, testSMTP, getPhished, getAllPhishedDetails };
+async function getTemplateOptions(req, res, next) {
+  try {
+    const { getTemplateOptions } = require('../services/phishing/templates');
+    const { type } = req.params;
+    const options = getTemplateOptions(type);
+    return res.json({ success: true, ...options });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { sendSimulation, trackToken, phishedLanding, testSMTP, getPhished, getAllPhishedDetails, getTemplateOptions };
 
 async function testSMTP(_req, res, next) {
   try {

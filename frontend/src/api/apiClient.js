@@ -49,6 +49,7 @@ export const api = {
     send: (payload) => request('/simulation/send', { method: 'POST', body: JSON.stringify(payload) }),
     getPhished: () => request('/simulation/phished'),
     getAllPhishedDetails: () => request('/simulation/phished/all'),
+    getTemplateOptions: (type) => request(`/simulation/template-options/${type}`),
   },
   awareness: () => request('/awareness'),
   dashboard: () => request('/dashboard'),
