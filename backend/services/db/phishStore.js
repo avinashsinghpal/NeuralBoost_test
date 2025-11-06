@@ -227,6 +227,46 @@ function getPhishedRecipients() {
   }
 }
 
-module.exports = { saveCampaign, saveEvent, getTrackedUrlBase, findRecipientByToken, markRecipientClicked, getPhishedRecipients };
+function getPhishedByDepartment() {
+  try {
+    console.log('[getPhishedByDepartment] Querying database...');
+    const summary = stmts.getPhishedByDepartment.all();
+    console.log('[getPhishedByDepartment] Found', summary.length, 'departments');
+    
+    const grouped = {};
+    for (const dept of summary) {
+      const deptName = dept.department || 'Unknown';
+      const details = stmts.getPhishedByDepartmentDetail.all(deptName);
+      
+      grouped[deptName] = {
+        department: deptName,
+        uniquePeople: dept.unique_people,
+        totalClicks: dept.total_clicks,
+        totalClickCount: dept.total_click_count,
+        people: details.map(row => ({
+          id: row.id,
+          contact: row.contact,
+          name: row.name,
+          department: row.department,
+          industry: row.industry,
+          clickedAt: row.clicked_at,
+          clickCount: row.click_count || 0,
+          deviceType: row.device_type,
+          operatingSystem: row.operating_system,
+          browser: row.browser
+        }))
+      };
+    }
+    
+    console.log('[getPhishedByDepartment] Grouped by', Object.keys(grouped).length, 'departments');
+    return grouped;
+  } catch (err) {
+    console.error('[getPhishedByDepartment] Error:', err);
+    console.error('[getPhishedByDepartment] Error stack:', err.stack);
+    return {};
+  }
+}
+
+module.exports = { saveCampaign, saveEvent, getTrackedUrlBase, findRecipientByToken, markRecipientClicked, getPhishedRecipients, getPhishedByDepartment };
 
 
