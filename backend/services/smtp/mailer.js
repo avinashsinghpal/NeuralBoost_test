@@ -26,7 +26,7 @@ function withTimeout(promise, timeoutMs, errorMsg) {
   ]);
 }
 
-async function sendEmail({ to, subject, html, text, from }) {
+async function sendEmail({ to, subject, html, text, from, attachments }) {
   const transport = getTransport();
   if (!transport) {
     console.warn('[SMTP] SMTP not configured. Skipping email send. Set SMTP_HOST, SMTP_USER, SMTP_PASS in .env');
@@ -38,8 +38,12 @@ async function sendEmail({ to, subject, html, text, from }) {
     console.log('[SMTP] Verifying connection...');
     await withTimeout(transport.verify(), 10000, 'SMTP verification timed out after 10 seconds');
     console.log('[SMTP] Connection verified, sending email...');
+    const mailOptions = { from: sender, to, subject, html, text };
+    if (attachments && attachments.length > 0) {
+      mailOptions.attachments = attachments;
+    }
     const info = await withTimeout(
-      transport.sendMail({ from: sender, to, subject, html, text }),
+      transport.sendMail(mailOptions),
       30000,
       'SMTP send timed out after 30 seconds'
     );
