@@ -10,6 +10,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const channelRoutes = require('./routes/channelRoutes');
 const simulationRoutes = require('./routes/simulationRoutes');
+const qrScanRoutes = require('./routes/qrScan');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -40,6 +41,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/channels', channelRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/simulation', simulationRoutes);
+app.use('/api/qr', qrScanRoutes);
 
 // public tracking endpoint (not under /api)
 app.get('/t/:token', require('./controllers/simulationController').trackToken);
@@ -59,8 +61,41 @@ try {
 }
 
 // Listen on all network interfaces (0.0.0.0) to allow access from other devices
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`TRACE backend listening on http://0.0.0.0:${PORT}`);
-  console.log(`TRACE backend accessible at http://localhost:${PORT} (local)`);
-  console.log(`TRACE backend accessible at http://<your-ip>:${PORT} (network)`);
-});
+try {
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`TRACE backend listening on http://0.0.0.0:${PORT}`);
+    console.log(`TRACE backend accessible at http://localhost:${PORT} (local)`);
+    console.log(`TRACE backend accessible at http://<your-ip>:${PORT} (network)`);
+  });
+
+  // Handle server errors
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n❌ Port ${PORT} is already in use!`);
+      console.error(`\nTo fix this, you can:`);
+      console.error(`1. Kill the process using port ${PORT}:`);
+      console.error(`   Windows: netstat -ano | findstr :${PORT} (then taskkill /PID <PID> /F)`);
+      console.error(`   Mac/Linux: lsof -ti:${PORT} | xargs kill -9`);
+      console.error(`2. Or change the port by setting PORT environment variable`);
+      console.error(`   Example: PORT=5002 npm start\n`);
+      process.exit(1);
+    } else {
+      console.error('Server error:', err);
+      process.exit(1);
+    }
+  });
+} catch (err) {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\n❌ Port ${PORT} is already in use!`);
+    console.error(`\nTo fix this, you can:`);
+    console.error(`1. Kill the process using port ${PORT}:`);
+    console.error(`   Windows: netstat -ano | findstr :${PORT} (then taskkill /PID <PID> /F)`);
+    console.error(`   Mac/Linux: lsof -ti:${PORT} | xargs kill -9`);
+    console.error(`2. Or change the port by setting PORT environment variable`);
+    console.error(`   Example: PORT=5002 npm start\n`);
+    process.exit(1);
+  } else {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+}
