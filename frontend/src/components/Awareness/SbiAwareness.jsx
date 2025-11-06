@@ -84,7 +84,7 @@ export default function SbiAwareness() {
       alt: "Verify the exact domain using a bookmark or by typing the address",
     },
     weakPassword: {
-      src: "/assets/awareness/strong-password.png",
+      src: "/assets/awareness/strong-passw  ord.png",
       alt: "Use a strong, unique password and enable MFA",
     },
     padlockMyth: {

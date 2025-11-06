@@ -18,5 +18,12 @@ export const api = {
   },
   awareness: () => request('/awareness'),
   dashboard: () => request('/dashboard'),
-  channels: () => request('/channels')
+  channels: () => request('/channels'),
+  sos: {
+    trigger: (payload) => request('/sos/trigger', { method: 'POST', body: JSON.stringify(payload) }),
+    state: () => request('/sos/state')
+  },
+  chat: {
+    ask: (prompt) => request('/chat/ask', { method: 'POST', body: JSON.stringify({ prompt }) })
+  }
 };
