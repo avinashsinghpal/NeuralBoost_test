@@ -1,29 +1,13 @@
-﻿import React from 'react';
-import { api } from '../api/apiClient';
-import useFetch from '../hooks/useFetch';
+﻿// ./pages/Awareness.jsx
+import React from "react";
+import { Outlet } from "react-router-dom";
 
 export default function Awareness() {
-  const { data, loading } = useFetch(api.awareness, []);
   return (
-    <section className="page two-col">
-      <div className="card">
-        <h2>Security Tips</h2>
-        {loading ? 'Loading…' : (
-          <ul>
-            {data?.tips?.map((t, i) => <li key={i}>{t}</li>)}
-          </ul>
-        )}
-      </div>
-      <div className="card">
-        <h2>Training Modules</h2>
-        {loading ? 'Loading…' : (
-          <ul>
-            {data?.trainings?.map((t) => (
-              <li key={t.id}>{t.title} · {t.durationMin} min</li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </section>
+    <div style={{ maxWidth: 1080, margin: "24px auto", padding: 16 }}>
+      <h1>Awareness</h1>
+      {/* Child routes render here (catalog at index, or SBI/Canara pages) */}
+      <Outlet />
+    </div>
   );
 }
