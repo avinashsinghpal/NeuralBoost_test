@@ -60,5 +60,11 @@ export const api = {
   },
   chat: {
     ask: (prompt) => request('/chat/ask', { method: 'POST', body: JSON.stringify({ prompt }) })
+  },
+  qr: {
+    scan: (url, user_hash) => request('/qr/scan', { 
+      method: 'POST', 
+      body: JSON.stringify({ url, user_hash }) 
+    })
   }
 };
