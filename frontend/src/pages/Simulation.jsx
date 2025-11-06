@@ -6,8 +6,13 @@ export default function Simulation() {
   const [recipients, setRecipients] = useState('alice@example.com\nbob@example.com');
   const [department, setDepartment] = useState('Finance');
   const [industry, setIndustry] = useState('IT Services');
-  const [subject, setSubject] = useState('Urgent: Account Verification Required');
-  const [message, setMessage] = useState('Please verify your account immediately at the link provided.');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [selectedSubjectIndex, setSelectedSubjectIndex] = useState(-1);
+  const [selectedMessageIndex, setSelectedMessageIndex] = useState(-1);
+  const [templateType, setTemplateType] = useState('random');
+  const [templateOptions, setTemplateOptions] = useState({ subjects: [], messages: [] });
+  const [loadingOptions, setLoadingOptions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [phished, setPhished] = useState([]);
@@ -22,9 +27,23 @@ export default function Simulation() {
     try {
       setLoadingPhished(true);
       const res = await api.simulation.getPhished();
+      console.log('[loadPhished] Received data:', res);
+      console.log('[loadPhished] Phished count:', res.phished?.length || 0);
+      
+      if (res.phished && res.phished.length > 0) {
+        console.log('[loadPhished] First phished item:', res.phished[0]);
+        console.log('[loadPhished] First item keys:', Object.keys(res.phished[0]));
+        console.log('[loadPhished] First item clickedAt:', res.phished[0].clickedAt);
+        console.log('[loadPhished] First item contact:', res.phished[0].contact);
+        console.log('[loadPhished] First item name:', res.phished[0].name);
+        console.log('[loadPhished] First item department:', res.phished[0].department);
+      }
+      
       setPhished(res.phished || []);
+      console.log('[loadPhished] State updated, phished.length:', res.phished?.length || 0);
     } catch (err) {
-      console.error('Failed to load phished recipients:', err);
+      console.error('[loadPhished] Failed to load phished recipients:', err);
+      console.error('[loadPhished] Error details:', err.message);
     } finally {
       setLoadingPhished(false);
     }
@@ -45,9 +64,36 @@ export default function Simulation() {
 
   useEffect(() => {
     loadPhished();
-    const interval = setInterval(loadPhished, 5000); // Refresh every 5 seconds
+    const interval = setInterval(() => {
+      console.log('[Simulation] Auto-refreshing phished list...');
+      loadPhished();
+    }, 5000); // Refresh every 5 seconds
     return () => clearInterval(interval);
   }, []);
+
+  // Load template options when template type changes
+  useEffect(() => {
+    if (mode === 'email' && templateType && templateType !== 'random') {
+      loadTemplateOptions(templateType);
+    } else {
+      setTemplateOptions({ subjects: [], messages: [] });
+      setSelectedSubjectIndex(-1);
+      setSelectedMessageIndex(-1);
+    }
+  }, [templateType, mode]);
+
+  async function loadTemplateOptions(type) {
+    try {
+      setLoadingOptions(true);
+      const res = await api.simulation.getTemplateOptions(type);
+      setTemplateOptions({ subjects: res.subjects || [], messages: res.messages || [] });
+    } catch (err) {
+      console.error('Failed to load template options:', err);
+      setTemplateOptions({ subjects: [], messages: [] });
+    } finally {
+      setLoadingOptions(false);
+    }
+  }
 
   async function onSend(e) {
     e.preventDefault();
@@ -58,7 +104,11 @@ export default function Simulation() {
         mode,
         recipients: recipients.split(/\r|\n/).map(s => s.trim()).filter(Boolean),
         meta: { department, industry },
-        content: { subject, message }
+        content: { 
+          subject: subject || undefined, 
+          message: message || undefined,
+          templateType: templateType
+        }
       };
       const res = await api.simulation.send(payload);
       setResult(res);
@@ -108,17 +158,100 @@ export default function Simulation() {
             </label>
           </div>
 
-          {mode !== 'qr' && (
-            <label style={{ display:'grid', gap:6 }}>
-              <span>Subject</span>
-              <input value={subject} onChange={e=>setSubject(e.target.value)} placeholder="Urgent: Account Verification Required" style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} />
-            </label>
-          )}
+           {mode === 'email' && (
+             <>
+               <label style={{ display:'grid', gap:6 }}>
+                 <span>Phishing Email Template</span>
+                 <select value={templateType} onChange={e=>setTemplateType(e.target.value)} style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }}>
+                   <option value="random">🎲 Random (Recommended)</option>
+                   <option value="banking">🏦 Banking Security Alert</option>
+                   <option value="tech_support">🔒 Tech Support Account Lock</option>
+                   <option value="invoice">📄 Invoice Payment Required</option>
+                   <option value="package">📦 Package Delivery Update</option>
+                   <option value="social_media">🔐 Social Media Security Alert</option>
+                 </select>
+                 <span style={{ fontSize: 12, opacity: 0.7, marginTop: -4 }}>Select a realistic phishing email template</span>
+               </label>
+               
+               {templateType !== 'random' && templateOptions.subjects.length > 0 && (
+                 <label style={{ display:'grid', gap:6 }}>
+                   <span>Select Subject Template (or edit below)</span>
+                   <select 
+                     value={selectedSubjectIndex} 
+                     onChange={e => {
+                       const idx = parseInt(e.target.value);
+                       setSelectedSubjectIndex(idx);
+                       if (idx >= 0 && idx < templateOptions.subjects.length) {
+                         setSubject(templateOptions.subjects[idx]);
+                       }
+                     }}
+                     style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }}
+                   >
+                     <option value={-1}>-- Choose a subject template --</option>
+                     {templateOptions.subjects.map((subj, idx) => (
+                       <option key={idx} value={idx}>{subj}</option>
+                     ))}
+                   </select>
+                 </label>
+               )}
+               
+               <label style={{ display:'grid', gap:6 }}>
+                 <span>Custom Subject {templateType !== 'random' ? '(Edit selected template or enter custom)' : '(Optional - overrides template)'}</span>
+                 <input 
+                   value={subject} 
+                   onChange={e => {
+                     setSubject(e.target.value);
+                     setSelectedSubjectIndex(-1);
+                   }} 
+                   placeholder={templateType !== 'random' ? "Select a template above or enter custom subject" : "Leave empty to use template subject"} 
+                   style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} 
+                 />
+               </label>
 
-          <label style={{ display:'grid', gap:6 }}>
-            <span>{mode==='qr' ? 'Landing message' : 'Message'}</span>
-            <textarea rows={5} value={message} onChange={e=>setMessage(e.target.value)} placeholder={mode==='qr'? 'Scan this QR to access the secure portal.' : 'Please verify your account immediately at the link provided.'} style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} />
-          </label>
+               {templateType !== 'random' && templateOptions.messages.length > 0 && (
+                 <label style={{ display:'grid', gap:6 }}>
+                   <span>Select Message Template (or edit below)</span>
+                   <select 
+                     value={selectedMessageIndex} 
+                     onChange={e => {
+                       const idx = parseInt(e.target.value);
+                       setSelectedMessageIndex(idx);
+                       if (idx >= 0 && idx < templateOptions.messages.length) {
+                         setMessage(templateOptions.messages[idx]);
+                       }
+                     }}
+                     style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }}
+                   >
+                     <option value={-1}>-- Choose a message template --</option>
+                     {templateOptions.messages.map((msg, idx) => (
+                       <option key={idx} value={idx}>{msg.substring(0, 60)}...</option>
+                     ))}
+                   </select>
+                 </label>
+               )}
+
+               <label style={{ display:'grid', gap:6 }}>
+                 <span>Additional Message {templateType !== 'random' ? '(Edit selected template or enter custom)' : '(Optional - will be added to template)'}</span>
+                 <textarea 
+                   rows={4} 
+                   value={message} 
+                   onChange={e => {
+                     setMessage(e.target.value);
+                     setSelectedMessageIndex(-1);
+                   }} 
+                   placeholder={templateType !== 'random' ? "Select a template above or enter custom message" : "Add any custom message that will be included in the email body..."} 
+                   style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} 
+                 />
+               </label>
+             </>
+           )}
+
+           {mode === 'qr' && (
+             <label style={{ display:'grid', gap:6 }}>
+               <span>Landing message</span>
+               <textarea rows={5} value={message} onChange={e=>setMessage(e.target.value)} placeholder="Scan this QR to access the secure portal." style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} />
+             </label>
+           )}
 
           <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
             <button type="submit" disabled={loading} style={{ background: `linear-gradient(135deg,${accent.from},${accent.to})`, color:'#fff', border:'none', borderRadius:10, padding:'10px 14px', fontWeight:800, cursor:'pointer', boxShadow: '0 10px 24px rgba(124,58,237,0.35)' }}>
@@ -148,24 +281,61 @@ export default function Simulation() {
                 )}
                 {Array.isArray(result.recipients) && result.recipients.length > 0 && (
                   <div style={{ marginTop: 8 }}>
-                    <h4>Per‑recipient tracking links</h4>
+                    <h4 style={{ marginBottom: 12, color: '#cbd5e1' }}>📋 Shareable Phishing Links</h4>
+                    <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>Copy these links to share with recipients. They work on any device (Desktop, Android, iPhone, etc.)</p>
                     <div style={{ overflowX:'auto' }}>
-                      <table style={{ width:'100%', borderCollapse:'collapse' }}>
+                      <table style={{ width:'100%', borderCollapse:'collapse', fontSize: 13 }}>
                         <thead>
-                          <tr style={{ textAlign:'left' }}>
-                            <th style={{ padding:'6px 8px', borderBottom:'1px solid #1f2937' }}>Contact</th>
-                            <th style={{ padding:'6px 8px', borderBottom:'1px solid #1f2937' }}>Name</th>
-                            <th style={{ padding:'6px 8px', borderBottom:'1px solid #1f2937' }}>Tracked URL</th>
+                          <tr style={{ textAlign:'left', background: '#0b1220' }}>
+                            <th style={{ padding:'10px 12px', borderBottom:'2px solid #1f2937', fontWeight: 600 }}>Contact</th>
+                            <th style={{ padding:'10px 12px', borderBottom:'2px solid #1f2937', fontWeight: 600 }}>Name</th>
+                            <th style={{ padding:'10px 12px', borderBottom:'2px solid #1f2937', fontWeight: 600 }}>Phishing Link</th>
+                            <th style={{ padding:'10px 12px', borderBottom:'2px solid #1f2937', fontWeight: 600 }}>Action</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {result.recipients.map((r, idx) => (
-                            <tr key={idx}>
-                              <td style={{ padding:'6px 8px', borderBottom:'1px solid #111827' }}>{r.contact}</td>
-                              <td style={{ padding:'6px 8px', borderBottom:'1px solid #111827' }}>{r.name || '—'}</td>
-                              <td style={{ padding:'6px 8px', borderBottom:'1px solid #111827', fontFamily:'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' }}>{r.trackedUrl}</td>
-                            </tr>
-                          ))}
+                          {result.recipients.map((r, idx) => {
+                            const trackedUrl = r.trackedUrl || `${result.summary?.trackedUrlBase || 'http://localhost:5001/t'}/${r.token}`;
+                            return (
+                              <tr key={idx} style={{ borderBottom:'1px solid #111827' }}>
+                                <td style={{ padding:'10px 12px' }}>{r.contact}</td>
+                                <td style={{ padding:'10px 12px' }}>{r.name || '—'}</td>
+                                <td style={{ padding:'10px 12px', fontFamily:'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: 12, wordBreak: 'break-all', maxWidth: '400px' }}>
+                                  <a href={trackedUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa', textDecoration: 'none' }}>{trackedUrl}</a>
+                                </td>
+                                <td style={{ padding:'10px 12px' }}>
+                                  <button 
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(trackedUrl).then(() => {
+                                        alert('Link copied to clipboard!');
+                                      }).catch(() => {
+                                        // Fallback for older browsers
+                                        const textArea = document.createElement('textarea');
+                                        textArea.value = trackedUrl;
+                                        document.body.appendChild(textArea);
+                                        textArea.select();
+                                        document.execCommand('copy');
+                                        document.body.removeChild(textArea);
+                                        alert('Link copied to clipboard!');
+                                      });
+                                    }}
+                                    style={{ 
+                                      background: 'linear-gradient(135deg, #0ea5e9, #7c3aed)', 
+                                      color: '#fff', 
+                                      border: 'none', 
+                                      borderRadius: 6, 
+                                      padding: '6px 12px', 
+                                      cursor: 'pointer',
+                                      fontSize: 12,
+                                      fontWeight: 600
+                                    }}
+                                  >
+                                    📋 Copy
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -191,6 +361,21 @@ export default function Simulation() {
             {loadingPhished ? 'Refreshing...' : '🔄 Refresh'}
           </button>
         </div>
+        {/* Debug info - only show in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ marginBottom: 12, padding: '8px 12px', background: '#0b1220', borderRadius: 8, fontSize: 11, fontFamily: 'monospace' }}>
+            <strong>Debug:</strong> phished.length = {phished.length} | loadingPhished = {String(loadingPhished)}
+            {phished.length > 0 && (
+              <details style={{ marginTop: 8 }}>
+                <summary style={{ cursor: 'pointer', color: '#60a5fa' }}>View raw data</summary>
+                <pre style={{ marginTop: 8, overflow: 'auto', maxHeight: 200, fontSize: 10 }}>
+                  {JSON.stringify(phished, null, 2)}
+                </pre>
+              </details>
+            )}
+          </div>
+        )}
+        
         {phished.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px', opacity: 0.7 }}>
             <p>No one has clicked a phishing link yet.</p>
@@ -199,42 +384,63 @@ export default function Simulation() {
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ textAlign: 'left', borderBottom: '2px solid #1f2937' }}>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Name</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Contact</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Department</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Industry</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Clicked At</th>
-                  <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Status</th>
-                </tr>
-              </thead>
+               <thead>
+                 <tr style={{ textAlign: 'left', borderBottom: '2px solid #1f2937' }}>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Name</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Contact</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Department</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Industry</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Device</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>OS</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Browser</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Clicked At</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Times Phished</th>
+                   <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Status</th>
+                 </tr>
+               </thead>
               <tbody>
-                {phished.map((p, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #111827', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#0b1220'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '10px 12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#0ea5e9,#7c3aed)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14 }}>
-                          {(p.name || p.contact || '?').charAt(0).toUpperCase()}
+                {phished.map((p, idx) => {
+                  console.log(`[Table] Rendering row ${idx}:`, p);
+                  return (
+                    <tr key={idx} style={{ borderBottom: '1px solid #111827', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#0b1220'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                      <td style={{ padding: '10px 12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#0ea5e9,#7c3aed)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14 }}>
+                            {(p.name || p.contact || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <span style={{ fontWeight: 500 }}>{p.name || '—'}</span>
                         </div>
-                        <span style={{ fontWeight: 500 }}>{p.name || '—'}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '10px 12px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: 13 }}>{p.contact}</td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <Badge color="#60a5fa">{p.department || '—'}</Badge>
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <Badge color="#a78bfa">{p.industry || '—'}</Badge>
-                    </td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, opacity: 0.8 }}>
-                      {new Date(p.clickedAt).toLocaleString()}
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <Badge color="#ef4444">Phished</Badge>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: 13 }}>{p.contact || '—'}</td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Badge color="#60a5fa">{p.department || '—'}</Badge>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Badge color="#a78bfa">{p.industry || '—'}</Badge>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Badge color="#34d399">{p.deviceType || p.details?.deviceType || '—'}</Badge>
+                      </td>
+                      <td style={{ padding: '10px 12px', fontSize: 12 }}>
+                        {p.operatingSystem || p.details?.os || '—'}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontSize: 12 }}>
+                        {p.browser || p.details?.browser || '—'}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, opacity: 0.8 }}>
+                        {p.clickedAt ? (typeof p.clickedAt === 'number' ? new Date(p.clickedAt).toLocaleString() : new Date(p.clickedAt).toLocaleString()) : '—'}
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Badge color={p.clickCount > 1 ? '#f59e0b' : '#ef4444'}>
+                          {p.clickCount || 1} {p.clickCount === 1 ? 'time' : 'times'}
+                        </Badge>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Badge color="#ef4444">Phished</Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -277,6 +483,46 @@ export default function Simulation() {
                 <div style={{ marginBottom: 12, padding: '8px 12px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, fontSize: 12, color: '#6ee7b7' }}>
                   📊 <strong>{dbView.count}</strong> records in database
                 </div>
+                
+                {/* Aggregated by Contact */}
+                {dbView.byContact && dbView.byContact.length > 0 && (
+                  <div style={{ marginBottom: 20 }}>
+                    <h4 style={{ marginBottom: 12, color: '#cbd5e1' }}>Summary by Contact</h4>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginBottom: 20 }}>
+                      <thead>
+                        <tr style={{ textAlign: 'left', borderBottom: '2px solid #1f2937', background: '#0b1220' }}>
+                          <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Name</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Contact</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Department</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Industry</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Total Campaigns</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Total Times Phished</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 600, color: '#cbd5e1' }}>Last Clicked</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dbView.byContact.map((contact, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #111827', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#0b1220'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                            <td style={{ padding: '10px 12px' }}>{contact.name}</td>
+                            <td style={{ padding: '10px 12px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: 13 }}>{contact.contact}</td>
+                            <td style={{ padding: '10px 12px' }}><Badge color="#60a5fa">{contact.department}</Badge></td>
+                            <td style={{ padding: '10px 12px' }}><Badge color="#a78bfa">{contact.industry}</Badge></td>
+                            <td style={{ padding: '10px 12px', textAlign: 'center' }}><Badge color="#34d399">{contact.totalCampaigns}</Badge></td>
+                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                              <Badge color={contact.totalClicks > 3 ? '#f59e0b' : '#ef4444'}>
+                                {contact.totalClicks} {contact.totalClicks === 1 ? 'time' : 'times'}
+                              </Badge>
+                            </td>
+                            <td style={{ padding: '10px 12px', fontSize: 12, opacity: 0.8 }}>{contact.lastClicked}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                
+                {/* All Records */}
+                <h4 style={{ marginBottom: 12, color: '#cbd5e1' }}>All Phishing Events</h4>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ textAlign: 'left', borderBottom: '2px solid #1f2937', background: '#0b1220' }}>
@@ -289,8 +535,8 @@ export default function Simulation() {
                     {dbView.table.rows.map((row, idx) => (
                       <tr key={idx} style={{ borderBottom: '1px solid #111827', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#0b1220'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                         {row.map((cell, cellIdx) => (
-                          <td key={cellIdx} style={{ padding: '10px 12px', fontFamily: cellIdx === 2 || cellIdx === 7 || cellIdx === 8 ? 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' : undefined, fontSize: cellIdx === 7 || cellIdx === 8 ? 11 : 13, maxWidth: cellIdx === 8 ? 300 : undefined, overflow: cellIdx === 8 ? 'hidden' : 'visible', textOverflow: cellIdx === 8 ? 'ellipsis' : 'clip' }} title={cellIdx === 8 ? String(cell) : undefined}>
-                            {String(cell)}
+                          <td key={cellIdx} style={{ padding: '10px 12px', fontFamily: cellIdx === 2 || cellIdx === 7 || cellIdx === 8 || cellIdx === 9 ? 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' : undefined, fontSize: cellIdx === 7 || cellIdx === 8 || cellIdx === 9 ? 11 : 13, maxWidth: cellIdx === 9 ? 300 : undefined, overflow: cellIdx === 9 ? 'hidden' : 'visible', textOverflow: cellIdx === 9 ? 'ellipsis' : 'clip', textAlign: cellIdx === 7 ? 'center' : 'left' }} title={cellIdx === 9 ? String(cell) : undefined}>
+                            {cellIdx === 7 ? <Badge color={Number(cell) > 1 ? '#f59e0b' : '#ef4444'}>{cell} {Number(cell) === 1 ? 'time' : 'times'}</Badge> : String(cell)}
                           </td>
                         ))}
                       </tr>

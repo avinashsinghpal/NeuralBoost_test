@@ -37,6 +37,7 @@ db.exec(`
     token TEXT UNIQUE NOT NULL,
     status TEXT DEFAULT 'queued',
     clicked_at INTEGER,
+    click_count INTEGER DEFAULT 0,
     error TEXT,
     FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
   );
@@ -46,6 +47,9 @@ db.exec(`
     recipient_id INTEGER NOT NULL,
     ip_address TEXT,
     user_agent TEXT,
+    device_type TEXT,
+    operating_system TEXT,
+    browser TEXT,
     clicked_at INTEGER NOT NULL,
     FOREIGN KEY (recipient_id) REFERENCES recipients(id) ON DELETE CASCADE
   );
@@ -55,6 +59,48 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_recipients_clicked ON recipients(clicked_at);
   CREATE INDEX IF NOT EXISTS idx_phished_recipient ON phished_details(recipient_id);
 `);
+
+// Migration: Add click_count column if it doesn't exist
+try {
+  const test = db.prepare('SELECT click_count FROM recipients LIMIT 1');
+  test.get();
+} catch (e) {
+  if (e.message && e.message.includes('no such column')) {
+    console.log('[DB] Adding click_count column to recipients table...');
+    try {
+      db.exec('ALTER TABLE recipients ADD COLUMN click_count INTEGER DEFAULT 0');
+      db.exec('UPDATE recipients SET click_count = 1 WHERE clicked_at IS NOT NULL');
+      console.log('[DB] Migration completed successfully');
+    } catch (migErr) {
+      console.error('[DB] Migration error:', migErr.message);
+    }
+  }
+}
+
+// Migration: Add device info columns to phished_details if they don't exist
+try {
+  const test = db.prepare('SELECT device_type FROM phished_details LIMIT 1');
+  test.get();
+  console.log('[DB] ✅ device_type column exists');
+} catch (e) {
+  if (e.message && e.message.includes('no such column')) {
+    console.log('[DB] ⚠️ Adding device info columns to phished_details table...');
+    try {
+      db.exec('ALTER TABLE phished_details ADD COLUMN device_type TEXT');
+      console.log('[DB] ✅ Added device_type column');
+      db.exec('ALTER TABLE phished_details ADD COLUMN operating_system TEXT');
+      console.log('[DB] ✅ Added operating_system column');
+      db.exec('ALTER TABLE phished_details ADD COLUMN browser TEXT');
+      console.log('[DB] ✅ Added browser column');
+      console.log('[DB] ✅ Device info migration completed successfully');
+    } catch (migErr) {
+      console.error('[DB] ❌ Device info migration error:', migErr.message);
+      console.error('[DB] ❌ Migration error stack:', migErr.stack);
+    }
+  } else {
+    console.error('[DB] ❌ Error checking device_type column:', e.message);
+  }
+}
 
 // Prepared statements for better performance
 const stmts = {
@@ -73,12 +119,12 @@ const stmts = {
   `),
   
   markRecipientClicked: db.prepare(`
-    UPDATE recipients SET clicked_at = ? WHERE token = ?
+    UPDATE recipients SET clicked_at = ?, click_count = click_count + 1 WHERE token = ?
   `),
   
   insertPhishedDetail: db.prepare(`
-    INSERT INTO phished_details (recipient_id, ip_address, user_agent, clicked_at)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO phished_details (recipient_id, ip_address, user_agent, device_type, operating_system, browser, clicked_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `),
   
   getRecipientByToken: db.prepare(`
@@ -94,16 +140,47 @@ const stmts = {
       r.contact,
       r.name,
       r.clicked_at,
+      COALESCE(r.click_count, 0) as click_count,
       c.meta_department as department,
       c.meta_industry as industry,
       c.mode,
       pd.ip_address,
-      pd.user_agent
+      pd.user_agent,
+      pd.device_type,
+      pd.operating_system,
+      pd.browser
     FROM recipients r
     JOIN campaigns c ON r.campaign_id = c.id
-    LEFT JOIN phished_details pd ON r.id = pd.recipient_id
+    LEFT JOIN (
+      SELECT 
+        recipient_id,
+        ip_address,
+        user_agent,
+        device_type,
+        operating_system,
+        browser,
+        clicked_at,
+        ROW_NUMBER() OVER (PARTITION BY recipient_id ORDER BY clicked_at DESC) as rn
+      FROM phished_details
+    ) pd ON r.id = pd.recipient_id AND pd.rn = 1
     WHERE r.clicked_at IS NOT NULL
     ORDER BY r.clicked_at DESC
+  `),
+  
+  getPhishedByContact: db.prepare(`
+    SELECT 
+      r.contact,
+      r.name,
+      COUNT(DISTINCT r.campaign_id) as total_campaigns,
+      SUM(COALESCE(r.click_count, 0)) as total_clicks,
+      MAX(r.clicked_at) as last_clicked,
+      MAX(c.meta_department) as department,
+      MAX(c.meta_industry) as industry
+    FROM recipients r
+    JOIN campaigns c ON r.campaign_id = c.id
+    WHERE r.clicked_at IS NOT NULL
+    GROUP BY r.contact, r.name
+    ORDER BY total_clicks DESC, last_clicked DESC
   `),
   
   getCampaignRecipients: db.prepare(`
