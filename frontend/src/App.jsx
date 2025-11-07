@@ -35,12 +35,6 @@ export default function App() {
           <Route path="/analyze" element={<Analyze />} />
           <Route path="/analyze-extracted" element={<AnalyzeExtracted />} />
 
-          {/* Parent layout with Outlet */}
-          <Route path="/awareness" element={<Awareness />}>
-            <Route index element={<BankPhishingAwareness />} />
-            <Route path="sbi" element={<SbiAwareness />} />
-            <Route path="canara" element={<CanaraAwareness />} />
-          </Route>
 
           {/* Awareness is now a single page (no nested children) */}
           <Route path="/awareness" element={<Awareness />} />
