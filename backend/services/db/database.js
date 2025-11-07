@@ -54,10 +54,27 @@ db.exec(`
     FOREIGN KEY (recipient_id) REFERENCES recipients(id) ON DELETE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS companies (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS employees (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL,
+    email TEXT NOT NULL,
+    name TEXT,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+  );
+
   CREATE INDEX IF NOT EXISTS idx_recipients_token ON recipients(token);
   CREATE INDEX IF NOT EXISTS idx_recipients_campaign ON recipients(campaign_id);
   CREATE INDEX IF NOT EXISTS idx_recipients_clicked ON recipients(clicked_at);
   CREATE INDEX IF NOT EXISTS idx_phished_recipient ON phished_details(recipient_id);
+  CREATE INDEX IF NOT EXISTS idx_employees_company ON employees(company_id);
 `);
 
 // Migration: Add click_count column if it doesn't exist
@@ -226,6 +243,29 @@ const stmts = {
   
   getCampaignRecipients: db.prepare(`
     SELECT * FROM recipients WHERE campaign_id = ?
+  `),
+
+  // Company and employee queries
+  createCompany: db.prepare(`
+    INSERT INTO companies (id, name, email, password, created_at)
+    VALUES (?, ?, ?, ?, strftime('%s', 'now'))
+  `),
+
+  getCompanyByEmail: db.prepare(`
+    SELECT * FROM companies WHERE email = ?
+  `),
+
+  getCompanyByName: db.prepare(`
+    SELECT * FROM companies WHERE name = ?
+  `),
+
+  createEmployee: db.prepare(`
+    INSERT INTO employees (id, company_id, email, name)
+    VALUES (?, ?, ?, ?)
+  `),
+
+  getEmployeesByCompany: db.prepare(`
+    SELECT * FROM employees WHERE company_id = ? ORDER BY email
   `)
 };
 
