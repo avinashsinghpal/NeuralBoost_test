@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralBoost - Interactive Project Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --primary-color: #0D9488; /* Teal */
+            --secondary-color: #1E1E1E;
+            --text-color: #E0E0E0;
+            --text-muted-color: #A0A0A0;
+            --border-color: #333;
+            --hover-color: #14B8A6;
+            --danger-color: #F43F5E; /* Rose */
+            --warning-color: #FBBF24; /* Amber */
+            --success-color: #34D399; /* Emerald */
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: var(--secondary-color);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
+        }
+        header {
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+        header h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        header p {
+            color: var(--text-muted-color);
+            font-size: 1.1em;
+        }
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        nav button {
+            background: none;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            font-weight: 500;
+        }
+        nav button:hover, nav button.active {
+            background-color: var(--primary-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 15px rgba(13, 148, 136, 0.5);
+        }
+        .content-section { display: none; }
+        .content-section.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        h2 {
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background-color: #2a2a2a;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+            display: flex;
+            flex-direction: column;
+        }
+        .card h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card p { color: var(--text-muted-color); flex-grow: 1; }
+        .card .demo-button {
+            margin-top: 15px;
+            background-color: var(--primary-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            align-self: flex-start;
+            transition: background-color 0.2s;
+        }
+        .card .demo-button:hover { background-color: var(--hover-color); }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: var(--secondary-color);
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 700px;
+            border: 1px solid var(--border-color);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .modal-header h3 { margin: 0; color: var(--primary-color); }
+        .modal-close { cursor: pointer; color: var(--text-muted-color); }
+        .demo-input-group { margin-bottom: 15px; }
+        .demo-input-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .demo-input-group input, .demo-input-group textarea {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .demo-input-group textarea { min-height: 120px; resize: vertical; }
+        .demo-output {
+            margin-top: 20px;
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            min-height: 100px;
+            font-family: "Fira Code", monospace;
+        }
+        .highlight-bad { color: var(--danger-color); font-weight: bold; }
+        .highlight-warn { color: var(--warning-color); font-weight: bold; }
+        .highlight-good { color: var(--success-color); font-weight: bold; }
+        .progress-bar { width: 100%; background-color: #444; border-radius: 5px; overflow: hidden; }
+        .progress-bar-inner { height: 10px; background-color: var(--primary-color); width: 0%; transition: width 0.5s; }
+        #qr-code-demo img { max-width: 150px; margin: 10px auto; display: block; }
+
+        /* File Explorer */
+        .file-explorer {
+            background-color: #1a1a1a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            height: 500px;
+            overflow-y: auto;
+        }
+        .file-explorer ul { list-style-type: none; padding-left: 20px; }
+        .file-explorer li { padding: 4px 0; }
+        .folder { cursor: pointer; font-weight: 500; }
+        .folder > span::before, .file::before {
+            font-family: 'feather';
+            margin-right: 10px;
+        }
+        .folder > span::before { content: '\e838'; } /* folder icon */
+        .file::before { content: '\e82e'; } /* file icon */
+        .folder.open > span::before { content: '\e835'; } /* folder-minus icon */
+        .folder > ul { display: none; }
+        .folder.open > ul { display: block; }
+
+        /* Architecture SVG */
+        #architecture-svg {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        .svg-bg { fill: #1a1a1a; }
+        .svg-box { fill: #2a2a2a; stroke: var(--border-color); stroke-width: 1; }
+        .svg-text { font-family: 'Inter', sans-serif; fill: var(--text-color); font-size: 12px; }
+        .svg-title { font-weight: 600; fill: var(--primary-color); font-size: 14px; }
+        .svg-line { stroke: var(--primary-color); stroke-width: 1.5; marker-end: url(#arrowhead); }
+        .svg-line-dashed { stroke-dasharray: 5,5; }
+
+        /* Tech Stack */
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .tech-item {
+            background-color: #2a2a2a;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Simulation */
+        .simulation-container { text-align: center; }
+        .simulation-flow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .flow-step {
+            background-color: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            opacity: 0.4;
+            transition: all 0.5s ease;
+            flex-shrink: 0;
+        }
+        .flow-step.active {
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .arrow { font-size: 24px; color: var(--primary-color); }
+        #simulation-output {
+            margin-top: 20px;
+            background-color: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            font-family: "Fira Code", "Courier New", monospace;
+            white-space: pre-wrap;
+            min-height: 150px;
+            border: 1px solid var(--border-color);
+        }
+        button#start-simulation {
+            margin-top: 20px;
+            background-color: var(--primary-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        button#start-simulation:hover { background-color: var(--hover-color); }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>NeuralBoost</h1>
+            <p>Interactive Anti-Phishing & Security Awareness Platform</p>
+            <nav>
+                <button class="nav-btn" data-target="overview"><i data-feather="home"></i> Overview</button>
+                <button class="nav-btn active" data-target="features"><i data-feather="star"></i> Interactive Demos</button>
+                <button class="nav-btn" data-target="architecture"><i data-feather="git-merge"></i> Architecture</button>
+                <button class="nav-btn" data-target="tech-stack"><i data-feather="cpu"></i> Tech Stack</button>
+                <button class="nav-btn" data-target="explorer"><i data-feather="folder"></i> File Explorer</button>
+                <button class="nav-btn" data-target="simulation"><i data-feather="play-circle"></i> Full Simulation</button>
+            </nav>
+        </header>
+
+        <main>
+            <section id="overview" class="content-section">
+                <h2><i data-feather="info"></i>Project Overview</h2>
+                <p>NeuralBoost is a multi-faceted security platform designed to combat phishing threats through a combination of real-time, deep-level analysis and proactive user education. It operates as a full-stack application with a powerful backend analysis engine and an intuitive frontend dashboard, supplemented by a browser extension for seamless integration into the user's workflow.</p>
+                <div class="grid">
+                    <div class="card">
+                        <h3><i data-feather="server"></i>Backend</h3>
+                        <p>The core of the platform, built with Node.js and Express. It exposes a REST API for the frontend and handles all the heavy lifting of threat analysis, from NLP and URL scanning to attachment sandboxing and database management.</p>
+                    </div>
+                    <div class="card">
+                        <h3><i data-feather="monitor"></i>Frontend</h3>
+                        <p>A dynamic and responsive user interface built with React and Vite. It provides users with a dashboard to view analytics, track threats, manage simulations, and access awareness training content. Features 3D visualizations with React Three Fiber.</p>
+                    </div>
+                    <div class="card">
+                        <h3><i data-feather="shield"></i>Mail Auth Extension</h3>
+                        <p>A lightweight browser extension that provides real-time sender verification and phishing warnings directly within the user's email client, offering an immediate layer of protection.</p>
+                    </div>
+                    <div class="card">
+                        <h3><i data-feather="settings"></i>Analysis Engine</h3>
+                        <p>A suite of specialized modules working in concert to deconstruct and evaluate potential threats. Each module focuses on a specific vector, from sender reputation to the intricacies of URL structures and attachment behaviors.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="features" class="content-section active">
+                <h2><i data-feather="star"></i>Core Feature Demos</h2>
+                <p>The following are not just descriptions, but interactive simulations of NeuralBoost's core analysis modules. Click "Run Demo" on any feature to see it in action.</p>
+                <div class="grid">
+                    <div class="card"><h3><i data-feather="search"></i>NLP Content Analysis</h3><p>Simulates analysis of text for phishing intent, detecting suspicious language, urgency cues, and common scam patterns.</p><button class="demo-button" data-modal="nlp-modal">Run Demo</button></div>
+                    <div class="card"><h3><i data-feather="link"></i>URL Reputation & Analysis</h3><p>Simulates scanning URLs against blacklists, checking domain reputation, and analyzing for punycode/homoglyph attacks.</p><button class="demo-button" data-modal="url-modal">Run Demo</button></div>
+                    <div class="card"><h3><i data-feather="camera"></i>QR Code Security</h3><p>Simulates decoding and verifying links embedded in QR codes to protect against mobile-targeted phishing (quishing).</p><button class="demo-button" data-modal="qr-modal">Run Demo</button></div>
+                    <div class="card"><h3><i data-feather="user-check"></i>Sender Analysis</h3><p>Simulates deep checks on an email sender's identity, including SPF record validation to detect potential spoofing.</p><button class="demo-button" data-modal="sender-modal">Run Demo</button></div>
+                </div>
+            </section>
+            
+            <section id="architecture" class="content-section">
+                <h2><i data-feather="git-merge"></i>System Architecture</h2>
+                <svg id="architecture-svg" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+                    <style>
+                        .svg-bg { fill: #1a1a1a; }
+                        .svg-box { fill: #2a2a2a; stroke: var(--border-color); stroke-width: 1; }
+                        .svg-text { font-family: 'Inter', sans-serif; fill: var(--text-color); font-size: 12px; }
+                        .svg-title { font-weight: 600; fill: var(--primary-color); font-size: 14px; }
+                        .svg-line { stroke: var(--primary-color); stroke-width: 1.5; marker-end: url(#arrowhead); }
+                        .svg-line-dashed { stroke-dasharray: 5,5; }
+                    </style>
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="var(--primary-color)" />
+                        </marker>
+                    </defs>
+                    <rect x="0" y="0" width="800" height="500" rx="10" class="svg-bg"/>
+                    
+                    <!-- User/Client Side -->
+                    <rect x="20" y="150" width="150" height="80" rx="5" class="svg-box"/>
+                    <text x="95" y="170" text-anchor="middle" class="svg-title">Clients</text>
+                    <text x="95" y="195" text-anchor="middle" class="svg-text">React Frontend</text>
+                    <text x="95" y="210" text-anchor="middle" class="svg-text">Browser Extension</text>
+
+                    <!-- Backend -->
+                    <rect x="250" y="100" width="300" height="280" rx="5" class="svg-box"/>
+                    <text x="400" y="120" text-anchor="middle" class="svg-title">Backend (Node.js / Express)</text>
+                    
+                    <rect x="260" y="140" width="135" height="40" rx="3" class="svg-box"/>
+                    <text x="327.5" y="165" text-anchor="middle" class="svg-text">API Gateway</text>
+                    
+                    <rect x="405" y="140" width="135" height="40" rx="3" class="svg-box"/>
+                    <text x="472.5" y="165" text-anchor="middle" class="svg-text">Controllers</text>
+
+                    <rect x="260" y="190" width="280" height="180" rx="3" class="svg-box"/>
+                    <text x="400" y="210" text-anchor="middle" class="svg-title">Analysis Engine</text>
+                    <text x="310" y="235" text-anchor="middle" class="svg-text">NLP Module</text>
+                    <text x="310" y="255" text-anchor="middle" class="svg-text">URL Reputation</text>
+                    <text x="310" y="275" text-anchor="middle" class="svg-text">Attachment Scan</text>
+                    <text x="490" y="235" text-anchor="middle" class="svg-text">Sender Analysis</text>
+                    <text x="490" y="255" text-anchor="middle" class="svg-text">QR Code Analysis</text>
+                    <text x="490" y="275" text-anchor="middle" class="svg-text">XAI Explainer</text>
+
+                    <!-- External/DB -->
+                    <rect x="630" y="80" width="150" height="60" rx="5" class="svg-box"/>
+                    <text x="705" y="100" text-anchor="middle" class="svg-title">External APIs</text>
+                    <text x="705" y="120" text-anchor="middle" class="svg-text">Reputation Services</text>
+
+                    <rect x="630" y="340" width="150" height="60" rx="5" class="svg-box"/>
+                    <text x="705" y="360" text-anchor="middle" class="svg-title">Database</text>
+                    <text x="705" y="380" text-anchor="middle" class="svg-text">SQLite (better-sqlite3)</text>
+
+                    <!-- Connections -->
+                    <path d="M170,190 H250" class="svg-line"/>
+                    <path d="M550,160 H630" class="svg-line svg-line-dashed"/>
+                    <path d="M550,300 V370 H630" class="svg-line"/>
+                </svg>
+            </section>
+
+            <section id="tech-stack" class="content-section">
+                <h2><i data-feather="cpu"></i>Technology Stack</h2>
+                <h3>Core Backend</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">Node.js</div>
+                    <div class="tech-item">Express</div>
+                    <div class="tech-item">Nodemailer</div>
+                    <div class="tech-item">better-sqlite3</div>
+                    <div class="tech-item">Jest</div>
+                </div>
+                <h3 style="margin-top: 20px;">Core Frontend</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">React</div>
+                    <div class="tech-item">Vite</div>
+                    <div class="tech-item">React Router</div>
+                    <div class="tech-item">Tailwind CSS</div>
+                    <div class="tech-item">React Three Fiber</div>
+                    <div class="tech-item">Framer Motion</div>
+                    <div class="tech-item">Recharts</div>
+                </div>
+                 <h3 style="margin-top: 20px;">Development & Tooling</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">Concurrently</div>
+                    <div class="tech-item">Nodemon</div>
+                    <div class="tech-item">ESLint</div>
+                </div>
+            </section>
+
+            <section id="explorer" class="content-section">
+                <h2><i data-feather="folder"></i>File Explorer</h2>
+                <div class="file-explorer" id="file-explorer-container"></div>
+            </section>
+
+            <section id="simulation" class="content-section">
+                <h2><i data-feather="play-circle"></i>Phishing Analysis Simulation</h2>
+                <div class="simulation-container">
+                    <p>Click the button below to simulate the full analysis pipeline for a suspicious email.</p>
+                    <div class="simulation-flow">
+                        <div id="step-1" class="flow-step">Ingestion</div><div class="arrow">→</div>
+                        <div id="step-2" class="flow-step">NLP Scan</div><div class="arrow">→</div>
+                        <div id="step-3" class="flow-step">URL Check</div><div class="arrow">→</div>
+                        <div id="step-4" class="flow-step">Sender Verify</div><div class="arrow">→</div>
+                        <div id="step-5" class="flow-step">Scoring</div><div class="arrow">→</div>
+                        <div id="step-6" class="flow-step">Verdict</div>
+                    </div>
+                    <button id="start-simulation">Start Full Simulation</button>
+                    <div id="simulation-output"><p>Simulation logs will appear here...</p></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- NLP Modal -->
+    <div id="nlp-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i data-feather="search"></i> NLP Content Analysis Demo</h3>
+                <i data-feather="x" class="modal-close"></i>
+            </div>
+            <div class="demo-input-group">
+                <label for="nlp-input">Enter text to analyze:</label>
+                <textarea id="nlp-input">URGENT: Your account has been suspended due to suspicious activity. Please verify your account immediately by clicking this link to avoid permanent closure. Your security is our priority.</textarea>
+            </div>
+            <button class="demo-button" id="nlp-analyze-btn">Analyze Text</button>
+            <div id="nlp-output" class="demo-output">Analysis results will appear here.</div>
+        </div>
+    </div>
+
+    <!-- URL Modal -->
+    <div id="url-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i data-feather="link"></i> URL Analysis Demo</h3>
+                <i data-feather="x" class="modal-close"></i>
+            </div>
+            <div class="demo-input-group">
+                <label for="url-input">Enter URL to analyze:</label>
+                <input type="text" id="url-input" value="http://login.microsft-online.com/common/oauth2">
+            </div>
+            <button class="demo-button" id="url-analyze-btn">Analyze URL</button>
+            <div id="url-output" class="demo-output"></div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qr-modal" class="modal-overlay">
+        <div class="modal-content" style="text-align: center;">
+            <div class="modal-header">
+                <h3><i data-feather="camera"></i> QR Code Analysis Demo</h3>
+                <i data-feather="x" class="modal-close"></i>
+            </div>
+            <p>This simulates scanning a QR code found in a potential phishing attempt.</p>
+            <div id="qr-code-demo">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://your-bank-security.info/update" alt="Sample QR Code">
+            </div>
+            <button class="demo-button" id="qr-analyze-btn">Simulate Scan</button>
+            <div id="qr-output" class="demo-output" style="text-align: left;">Scan results will appear here.</div>
+        </div>
+    </div>
+
+    <!-- Sender Modal -->
+    <div id="sender-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i data-feather="user-check"></i> Sender Analysis Demo</h3>
+                <i data-feather="x" class="modal-close"></i>
+            </div>
+            <div class="demo-input-group">
+                <label for="sender-from">From Header:</label>
+                <input type="text" id="sender-from" value="security@yourbank.com">
+            </div>
+            <div class="demo-input-group">
+                <label for="sender-spf">Received-SPF Header:</label>
+                <input type="text" id="sender-spf" value="fail (google.com: domain of security@yourbank.com does not designate 123.45.67.89 as permitted sender)">
+            </div>
+            <button class="demo-button" id="sender-analyze-btn">Verify Sender</button>
+            <div id="sender-output" class="demo-output"></div>
+        </div>
+    </div>
+
+
+    <script>
+        const projectStructure = {
+            "backend": {
+                "analytics": { "behaviorAnalytics.js": null, "feedbackLearning.js": null, "reportGenerator.js": null, "threatScoring.js": null },
+                "config": { "constants.js": null, "db.js": null, "scenarioPresets.js": null, "weights.js": null },
+                "controllers": { "analysisController.js": null, "authController.js": null, "awarenessController.js": null, "chatController.js": null, "dashboardController.js": null, "simulationController.js": null, "sosController.js": null },
+                "db": { "qrDb.js": null },
+                "middleware": { "authMiddleware.js": null, "errorHandler.js": null },
+                "modules": {
+                    "attachmentAnalysis": { "attachmentScanner.js": null, "sandboxInterface.js": null },
+                    "nlpContent": { "phishingIntent.js": null, "textPreprocessor.js": null },
+                    "punycodeAnalysis": { "punycodeDetector.js": null },
+                    "senderAnalysis": { "senderAnalyzer.js": null, "spoofDetection.js": null },
+                    "urlReputation": { "domainLookup.js": null, "urlChecker.js": null }
+                },
+                "routes": { "analysisRoutes.js": null, "authRoutes.js": null, "dashboardRoutes.js": null, "qrScan.js": null },
+                "services": { "qrAnalyzer.js": null },
+                "tests": { "testEndToEnd.js": null, "testModules.test.js": null },
+                "utils": { "logger.js": null, "redact.js": null, "validate.js": null },
+                "server.js": null, "package.json": null
+            },
+            "frontend": {
+                "src": {
+                    "api": { "apiClient.js": null },
+                    "assets": {},
+                    "components": { "Loader.jsx": null, "QRScanner.jsx": null },
+                    "context": { "CompanyContext.jsx": null, "UserContext.jsx": null },
+                    "hooks": { "useFetch.js": null },
+                    "pages": { "Analyze.jsx": null, "Dashboard.jsx": null, "Awareness.jsx": null },
+                    "App.jsx": null, "index.jsx": null
+                },
+                "public": {},
+                "package.json": null, "vite.config.js": null
+            },
+            "mail-auth-extension": { "manifest.json": null, "popup.js": null, "server.js": null },
+            "docs": { "api_spec.md": null, "architecture.md": null },
+            ".gitignore": null, "package.json": null, "README.md": null
+        };
+
+        function createFileTree(container, structure) {
+            const ul = document.createElement('ul');
+            for (const key in structure) {
+                const li = document.createElement('li');
+                if (structure[key] === null) { // It's a file
+                    li.classList.add('file');
+                    li.textContent = key;
+                } else { // It's a folder
+                    li.classList.add('folder');
+                    const span = document.createElement('span');
+                    span.textContent = key;
+                    li.appendChild(span);
+                    createFileTree(li, structure[key]);
+                }
+                ul.appendChild(li);
+            }
+            container.appendChild(ul);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+
+            // Navigation
+            const navButtons = document.querySelectorAll('.nav-btn');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    navButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    contentSections.forEach(section => {
+                        section.classList.remove('active');
+                        if (section.id === button.dataset.target) {
+                            section.classList.add('active');
+                        }
+                    });
+                });
+            });
+
+            // File Explorer
+            const explorerContainer = document.getElementById('file-explorer-container');
+            createFileTree(explorerContainer, projectStructure);
+            explorerContainer.addEventListener('click', function(e) {
+                if (e.target.tagName === 'SPAN' && e.target.parentElement.classList.contains('folder')) {
+                    e.target.parentElement.classList.toggle('open');
+                }
+            });
+
+            // --- DEMO LOGIC ---
+
+            // 1. NLP Demo
+            document.getElementById('nlp-analyze-btn').addEventListener('click', () => {
+                const text = document.getElementById('nlp-input').value;
+                const output = document.getElementById('nlp-output');
+                const keywords = {
+                    'URGENT': 'high', 'immediately': 'high', 'suspended': 'high',
+                    'verify': 'medium', 'account': 'medium', 'security': 'low', 'clicking': 'medium',
+                    'action required': 'high', 'limited time': 'high', 'compromised': 'high',
+                    'password': 'medium', 'login': 'medium', 'update': 'medium',
+                    'bank': 'low', 'financial': 'low'
+                };
+                let score = 0;
+                let tempText = text; // Use a temporary variable for replacement
+
+                Object.keys(keywords).forEach(key => {
+                    // Use a global regex to replace all occurrences
+                    const regex = new RegExp(`\b${key}\b`, 'gi');
+                    if (tempText.match(regex)) {
+                        score += keywords[key] === 'high' ? 30 : (keywords[key] === 'medium' ? 15 : 5);
+                        tempText = tempText.replace(regex, `<span class="${keywords[key] === 'high' ? 'highlight-bad' : 'highlight-warn'}">${key}</span>`);
+                    }
+                });
+                score = Math.min(score, 100);
+                output.innerHTML = `
+                    <p><strong>Analysis Complete</strong></p>
+                    <p>Threat Score: <span class="${score > 60 ? 'highlight-bad' : (score > 30 ? 'highlight-warn' : 'highlight-good')}">${score}/100</span></p>
+                    <hr style="border-color: var(--border-color);">
+                    <p>${tempText}</p>
+                `;
+            });
+
+            // 2. URL Demo
+            document.getElementById('url-analyze-btn').addEventListener('click', () => {
+                const url = document.getElementById('url-input').value;
+                const output = document.getElementById('url-output');
+                output.innerHTML = '<p>Analyzing...</p><div class="progress-bar"><div id="url-progress" class="progress-bar-inner"></div></div>';
+                
+                setTimeout(() => {
+                    document.getElementById('url-progress').style.width = '100%';
+                    let results = '';
+                    let score = 0;
+
+                    // Homoglyph check
+                    if (url.includes('microsft')) {
+                        results += `<p>Homoglyph Detected: <span class="highlight-bad">'microsft'</span> is visually similar to <span class="highlight-good">'microsoft'</span>.</p>`;
+                        score += 50;
+                    }
+                    // TLD check
+                    const tldMatch = url.match(/\.(com|net|org|info|biz|xyz)/);
+                    if (tldMatch && (tldMatch[1] === 'info' || tldMatch[1] === 'biz' || tldMatch[1] === 'xyz')) {
+                        results += `<p>TLD Check: Uncommon/Suspicious TLD (.${tldMatch[1]}) - <span class="highlight-warn">Suspicious</span></p>`;
+                        score += 15;
+                    } else if (tldMatch) {
+                         results += `<p>TLD Check: Standard TLD (.${tldMatch[1]}) - <span class="highlight-good">OK</span></p>`;
+                    } else {
+                        results += `<p>TLD Check: No recognizable TLD - <span class="highlight-warn">Suspicious</span></p>`;
+                        score += 20;
+                    }
+                    // Blacklist check (simulated)
+                    if (url.includes('bank-security.info') || url.includes('microsft-online.com')) {
+                        results += `<p>Blacklist Simulation: Domain <span class="highlight-bad">found</span> on simulated threat intelligence list.</p>`;
+                        score += 40;
+                    } else {
+                        results += `<p>Blacklist Simulation: Domain <span class="highlight-good">not found</span> on simulated threat intelligence list.</p>`;
+                    }
+                    
+                    score = Math.min(score, 100);
+                    output.innerHTML = `
+                        <p><strong>URL Analysis Report</strong></p>
+                        <p>Overall Risk: <span class="${score > 70 ? 'highlight-bad' : (score > 30 ? 'highlight-warn' : 'highlight-good')}">${score > 70 ? 'High Risk' : (score > 30 ? 'Medium Risk' : 'Low Risk')}</span></p>
+                        <hr style="border-color: var(--border-color);">
+                        ${results}
+                    `;
+                }, 1000);
+            });
+
+            // 3. QR Code Demo
+            document.getElementById('qr-analyze-btn').addEventListener('click', () => {
+                const output = document.getElementById('qr-output');
+                const maliciousUrl = "http://your-bank-security.info/update";
+                output.innerHTML = '<p>Simulating QR scan...</p><div class="progress-bar"><div id="qr-progress" class="progress-bar-inner"></div></div>';
+
+                setTimeout(() => {
+                    document.getElementById('qr-progress').style.width = '100%';
+                    output.innerHTML = `
+                        <p><strong>Scan Complete</strong></p>
+                        <p>Decoded URL: <span class="highlight-warn">${maliciousUrl}</span></p>
+                        <hr style="border-color: var(--border-color);">
+                        <p><strong>URL Analysis initiated...</strong></p>
+                        <p>Domain Reputation: <span class="highlight-bad">Poor (Recently Registered)</span></p>
+                        <p>URL Blacklist Check: <span class="highlight-bad">MATCH FOUND</span></p>
+                        <p>Verdict: <span class="highlight-bad">MALICIOUS LINK - BLOCKING</span></p>
+                    `;
+                }, 1000);
+            });
+
+            // 4. Sender Demo
+            document.getElementById('sender-analyze-btn').addEventListener('click', () => {
+                const from = document.getElementById('sender-from').value;
+                const spf = document.getElementById('sender-spf').value.toLowerCase();
+                const output = document.getElementById('sender-output');
+
+                let result = '';
+                if (spf.startsWith('fail')) {
+                    result = `
+                        <p><strong class="highlight-bad">Verdict: SPOOFING LIKELY</strong></p>
+                        <p>Reason: The SPF record check <span class="highlight-bad">failed</span>. This means the email did not originate from a server authorized by '${from}'.</p>
+                    `;
+                } else if (spf.startsWith('pass')) {
+                     result = `
+                        <p><strong class="highlight-good">Verdict: SENDER VERIFIED</strong></p>
+                        <p>Reason: The SPF record check <span class="highlight-good">passed</span>. The email originated from an authorized server.</p>
+                    `;
+                } else {
+                    result = `<p><strong class="highlight-warn">Verdict: INDETERMINATE</strong></p><p>Could not definitively determine sender authenticity from provided headers.</p>`;
+                }
+                output.innerHTML = result;
+            });
+
+            // Full Simulation
+            const startButton = document.getElementById('start-simulation');
+            const steps = document.querySelectorAll('#simulation .flow-step'); // Target steps within the simulation section
+            const simulationOutput = document.getElementById('simulation-output');
+
+            startButton.addEventListener('click', () => {
+                let currentStep = 0;
+                startButton.disabled = true;
+                steps.forEach(step => step.classList.remove('active'));
+                simulationOutput.innerHTML = '';
+
+                const simulationSteps = [
+                    { log: "Receiving email from 'support@your-bank-verify.com'...", duration: 500 },
+                    { log: "NLP SCAN: Analyzing content... Found urgency keywords ('action required') and financial terms.", duration: 1000 },
+                    { log: "URL CHECK: Extracted 'http://your-bank-verify.com/login'. Running Punycode detector... No homoglyphs found. Checking domain reputation via API... Domain is 2 days old, flagged as suspicious.", duration: 1500 },
+                    { log: "SENDER VERIFY: Analyzing headers... SPF check failed. DMARC policy is 'none'. High probability of spoofing.", duration: 1200 },
+                    { log: "SCORING: Compiling scores... Content: 30/100, URL: 85/100, Sender: 90/100. Calculating weighted average...", duration: 800 },
+                    { log: "VERDICT: Final Threat Score: 88/100. CLASSIFICATION: PHISHING. Action: Quarantine.", duration: 500 }
+                ];
+
+                function runStep() {
+                    if (currentStep < simulationSteps.length) { // Corrected loop condition
+                        steps[currentStep].classList.add('active');
+                        const logEntry = document.createElement('p');
+                        logEntry.innerHTML = `<span style="color: var(--primary-color);">[STEP ${currentStep + 1}]</span> ${simulationSteps[currentStep].log}`;
+                        simulationOutput.appendChild(logEntry);
+                        simulationOutput.scrollTop = simulationOutput.scrollHeight;
+                        
+                        setTimeout(() => {
+                            currentStep++;
+                            runStep();
+                        }, simulationSteps[currentStep -1].duration); // Use currentStep -1 for duration
+                    } else {
+                         const finalMsg = document.createElement('p');
+                         finalMsg.textContent = "Simulation complete. Threat neutralized.";
+                         finalMsg.style.fontWeight = "bold";
+                         finalMsg.style.color = "var(--hover-color)";
+                         simulationOutput.appendChild(finalMsg);
+                         startButton.disabled = false;
+                    }
+                }
+                runStep();
+            });
+        });
+    </script>
+
+</body>
+</html>
