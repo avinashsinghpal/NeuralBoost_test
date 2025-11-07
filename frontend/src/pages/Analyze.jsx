@@ -11,7 +11,7 @@ export default function Analyze() {
   const [result, setResult] = useState(null);
   const [steps, setSteps] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [scenario, setScenario] = useState('');
+  const [scenario, setScenario] = useState('classic'); // Default to Classic Phishing Attacks
   const [explainLoading, setExplainLoading] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
   const [analysisMode, setAnalysisMode] = useState('email'); // 'email' or 'qr'
@@ -29,7 +29,10 @@ export default function Analyze() {
     setLoading(true);
     setShowOverlay(true);
     setResult(null);
-    setSteps([
+    setExplainLoading(true);
+    
+    // Initialize steps array
+    const initialSteps = [
       { index: 1, label: 'Analyzing Domain and Mail Metadata', done: false, sub: [
         { label: 'Getting Domain Name', done:false },
         { label: 'Parsing Mail Headers', done:false }
@@ -51,8 +54,11 @@ export default function Analyze() {
         { label: 'Listing attachments', done:false },
         { label: 'Heuristic checks', done:false }
       ]}
-    ]);
-    setExplainLoading(true);
+    ];
+    
+    // Set initial steps and wait a bit to ensure state update
+    setSteps(initialSteps);
+    await new Promise(r => setTimeout(r, 100));
 
     const urlsManual = urlsText.split(/\n|\r/).map(s => s.trim()).filter(Boolean);
     const urls = Array.from(new Set(urlsManual));
@@ -66,19 +72,25 @@ export default function Analyze() {
       scenario: scenario || undefined
     };
 
+    // Determine delay multiplier (halve for clean scenario)
+    const delayMultiplier = scenario === 'clean' ? 0.5 : 1;
+
     // Kick off API but reveal steps gradually
     const promise = api.analysis.runEmail(payload);
+    let currentSteps = [...initialSteps];
     for (let i = 0; i < 5; i++) {
-      for (let j = 0; j < (steps[i]?.sub?.length || 0); j++) {
+      for (let j = 0; j < (currentSteps[i]?.sub?.length || 0); j++) {
         // eslint-disable-next-line no-await-in-loop
-        await new Promise(r => setTimeout(r, 750 + Math.floor(Math.random()*250)));
-        setSteps(prev => prev.map(s => s.index === i + 1 ? { ...s, sub: s.sub.map((ss, idx) => idx===j? { ...ss, done:true } : ss) } : s));
+        await new Promise(r => setTimeout(r, (750 + Math.floor(Math.random()*250)) * delayMultiplier));
+        currentSteps = currentSteps.map(s => s.index === i + 1 ? { ...s, sub: s.sub.map((ss, idx) => idx===j? { ...ss, done:true } : ss) } : s);
+        setSteps([...currentSteps]);
       }
-      setSteps(prev => prev.map(s => s.index === i + 1 ? { ...s, done: true } : s));
+      currentSteps = currentSteps.map(s => s.index === i + 1 ? { ...s, done: true } : s);
+      setSteps([...currentSteps]);
     }
     const res = await promise;
     // Simulate separate AI explanation reveal
-    await new Promise(r => setTimeout(r, 1200 + Math.floor(Math.random()*600)));
+    await new Promise(r => setTimeout(r, (1200 + Math.floor(Math.random()*600)) * delayMultiplier));
     setResult(res);
     setExplainLoading(false);
     setLoading(false);
@@ -86,14 +98,10 @@ export default function Analyze() {
   }
 
   const scenarios = [
-    { key: 'metadata', label: 'Metadata Scam', icon: '📧', color: '#ef4444' },
-    { key: 'url', label: 'URL Scam', icon: '🔗', color: '#f59e0b' },
-    { key: 'homograph', label: 'Homograph URL', icon: '🔤', color: '#8b5cf6' },
-    { key: 'punycode', label: 'Punycode Apple', icon: '🍎', color: '#ec4899' },
-    { key: 'nlp', label: 'NLP Scam', icon: '💬', color: '#06b6d4' },
-    { key: 'attachment', label: 'Attachment Scam', icon: '📎', color: '#f97316' },
-    { key: 'clean', label: 'No Scam', icon: '✅', color: '#10b981' },
-    { key: 'new', label: 'Custom', icon: '✨', color: '#6366f1' }
+    { key: 'classic', label: 'Classic Phishing Attacks', subtitle: 'Metadata + URL + Content', icon: '🎣', color: '#ef4444' },
+    { key: 'modern', label: 'Modern Phishing Attacks', subtitle: 'Homograph + Punycode + Attachment', icon: '🔬', color: '#8b5cf6' },
+    { key: 'clean', label: 'No Scam', subtitle: 'Safe Email', icon: '✅', color: '#10b981' },
+    { key: 'new', label: 'Manual Input', subtitle: 'Enter Custom Data', icon: '✏️', color: '#6366f1' }
   ];
 
   function handleScenarioSelect(key) {
@@ -109,6 +117,11 @@ export default function Analyze() {
       presetScenario({ setSubject, setBody, setFromHeader, setUrlsText, setAttachments }, key);
     }
   }
+
+  // Pre-fill Classic scenario on initial load
+  useEffect(() => {
+    presetScenario({ setSubject, setBody, setFromHeader, setUrlsText, setAttachments }, 'classic');
+  }, []); // Only run on mount
 
   return (
     <section className="page">
@@ -204,9 +217,10 @@ export default function Analyze() {
         }}>
           <h3 style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 600, color: '#fff' }}>Quick Scenarios</h3>
           <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-            gap: 10
+            display: 'flex', 
+            flexWrap: 'wrap',
+            gap: 10,
+            justifyContent: 'space-between'
           }}>
             {scenarios.map((s) => (
               <button
@@ -214,8 +228,12 @@ export default function Analyze() {
                 type="button"
                 onClick={() => handleScenarioSelect(s.key)}
                 style={{
-                  padding: s.key === 'new' ? '12px 10px' : '10px 8px',
+                  padding: s.key === 'new' ? '14px 10px' : '12px 8px',
                   borderRadius: 12,
+                  minHeight: s.subtitle ? '90px' : '70px',
+                  flex: '1 1 calc(25% - 8px)',
+                  minWidth: '140px',
+                  maxWidth: '200px',
                   border: scenario === s.key 
                     ? `2px solid ${s.color}` 
                     : s.key === 'new' 
@@ -267,14 +285,27 @@ export default function Analyze() {
                   {s.icon}
                 </div>
                 <div style={{ 
-                  fontSize: s.key === 'new' ? 12 : 11, 
-                  fontWeight: s.key === 'new' ? 700 : 600,
+                  fontSize: s.key === 'new' ? 12 : 13, 
+                  fontWeight: 700,
                   textAlign: 'center',
-                  lineHeight: 1.3,
-                  color: s.key === 'new' ? '#a78bfa' : '#e5e7eb'
+                  lineHeight: 1.2,
+                  color: s.key === 'new' ? '#a78bfa' : '#e5e7eb',
+                  marginBottom: s.subtitle ? 2 : 0
                 }}>
                   {s.label}
                 </div>
+                {s.subtitle && (
+                  <div style={{
+                    fontSize: 10,
+                    fontWeight: 500,
+                    textAlign: 'center',
+                    lineHeight: 1.2,
+                    color: '#9ca3af',
+                    opacity: 0.8
+                  }}>
+                    {s.subtitle}
+                  </div>
+                )}
                 {scenario === s.key && (
                   <div style={{
                     position: 'absolute',
@@ -743,7 +774,7 @@ export default function Analyze() {
             </div>
           </div>
           <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <h4 style={{ margin: '0 0 12px 0', fontSize: 18, fontWeight: 600, color: '#fff' }}>Analysis Explanation</h4>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: 18, fontWeight: 600, color: '#fff' }}>AI Classification and Reasoning</h4>
             {explainLoading ? (
               <div style={{ display:'grid', gap:10 }}>
                 {[1,2,3,4].map(i => (
@@ -803,53 +834,27 @@ export default function Analyze() {
 function presetScenario(api, kind) {
   const { setSubject, setBody, setFromHeader, setUrlsText, setAttachments } = api;
   switch(kind) {
-    case 'metadata':
-      setSubject('Payroll Update');
-      setBody('Please review attached payroll changes. Visit https://company.example.com/policy for details.');
-      setFromHeader('HR <hr@payroll.example.com>');
-      setUrlsText('https://company.example.com/policy');
-      setAttachments([{ filename: 'changes.docx', mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', size: 102400 }]);
-      break;
-    case 'url':
-      setSubject('Reset your password');
-      setBody('Please reset your password immediately using the following link: http://bad-actor.com/reset');
-      setFromHeader('IT Support <it@example.com>');
-      setUrlsText('http://bad-actor.com/reset');
+    case 'classic':
+      // Classic Phishing: Metadata + URL + Content manipulation
+      setSubject('URGENT: Account Verification Required');
+      setBody('We detected suspicious activity on your account. Please verify immediately by clicking: http://paypa1.com/verify-account\n\nThis is your final notice. Your account will be locked if you do not respond within 24 hours.');
+      setFromHeader('Security Team <security@payroll.example.com>');
+      setUrlsText('http://paypa1.com/verify-account');
       setAttachments([{ filename: '', mime: '', size: 0 }]);
       break;
-    case 'homograph':
-      setSubject('Your Apple receipt');
-      setBody('Check your receipt link: http://appⅼe.com/login');
+    case 'modern':
+      // Modern Phishing: Homograph + Punycode + Attachment
+      setSubject('Your Apple ID Verification');
+      setBody('Please verify your Apple ID by clicking the link: http://appⅼe.com/verify\n\nOr visit: http://xn--pple-43d.com/login\n\nImportant document attached for your review.');
       setFromHeader('Apple Support <support@apple.com>');
-      setUrlsText('http://appⅼe.com/login');
-      setAttachments([{ filename: '', mime: '', size: 0 }]);
-      break;
-    case 'punycode':
-      setSubject('Apple ID locked');
-      setBody('Verify your Apple ID: http://xn--pple-43d.com/login');
-      setFromHeader('Apple <no-reply@apple.com>');
-      setUrlsText('http://xn--pple-43d.com/login');
-      setAttachments([{ filename: '', mime: '', size: 0 }]);
-      break;
-    case 'nlp':
-      setSubject('URGENT: Final Notice');
-      setBody('Verify your account now or it will be closed. Send a gift card code.');
-      setFromHeader('Security Team <sec@company.com>');
-      setUrlsText('');
-      setAttachments([{ filename: '', mime: '', size: 0 }]);
-      break;
-    case 'attachment':
-      setSubject('Invoice Attached');
-      setBody('Please pay the attached invoice.docm today.');
-      setFromHeader('Billing <billing@vendor.com>');
-      setUrlsText('https://vendor.com/help');
-      setAttachments([{ filename: 'invoice.docm', mime: 'application/vnd.ms-word', size: 20480 }]);
+      setUrlsText('http://appⅼe.com/verify\nhttp://xn--pple-43d.com/login');
+      setAttachments([{ filename: 'verification.docm', mime: 'application/vnd.ms-word', size: 20480 }]);
       break;
     case 'clean':
       setSubject('Team Lunch');
-      setBody("Let's meet at 12 PM for lunch. See menu: https://company.com/menu");
+      setBody("Let's meet at 12 PM for lunch and have some biryani. See menu: https://behrouz.com/menu");
       setFromHeader('Manager <manager@company.com>');
-      setUrlsText('https://company.com/menu');
+      setUrlsText('https://behrouz.com/menu');
       setAttachments([{ filename: '', mime: '', size: 0 }]);
       break;
     default:
