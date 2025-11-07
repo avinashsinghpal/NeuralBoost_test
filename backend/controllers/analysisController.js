@@ -62,7 +62,10 @@ async function postAnalyzeEmail(req, res, next) {
     const threatScore = preset && typeof preset.threatScore === 'number' ? preset.threatScore : computed.threatScore;
     const fusionExplain = undefined; // hidden in UI
 
-    const xaiExplanation = await geminiExplain({ breakdown, threatScore, riskCategory, scenario });
+    // Use preset explanation if available, otherwise generate with Gemini
+    const xaiExplanation = preset && preset.xaiExplanation 
+      ? preset.xaiExplanation 
+      : await geminiExplain({ breakdown, threatScore, riskCategory, scenario });
 
     return res.json({
       success: true,
