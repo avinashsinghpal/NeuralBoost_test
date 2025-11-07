@@ -352,9 +352,6 @@ This verification is mandatory and must be completed within the next 24 hours to
 
           <label style={{ display:'grid', gap:6 }}>
             <span>Recipients (emails)</span>
-<<<<<<< HEAD
-            <textarea rows={4} value={recipients} onChange={e=>setRecipients(e.target.value)} placeholder="alice@example.com\nbob@example.com" style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} />
-=======
             <textarea 
               rows={4} 
               value={recipients} 
@@ -367,7 +364,6 @@ This verification is mandatory and must be completed within the next 24 hours to
                 💡 Tip: Selected employees above will be automatically added to this list when you click "Send Simulation"
               </div>
             )}
->>>>>>> 0070d32886f74ac0fec4710c16dacc9233ab5129
           </label>
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
