@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "MailAuth Demo",
+  "version": "0.1",
+  "description": "Simulated hardcoded extraction → POST → redirect",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "MailAuth Demo"
+  },
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "http://localhost/*"
+  ]
+}
+
