@@ -3,7 +3,7 @@ import React from 'react';
 import SOSButton from './components/Shared/SOSButton.jsx';
 import Chatbot from './components/Shared/Chatbot.jsx';
 import AppShell from './components/chrome/AppShell.jsx';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Navigate } from 'react-router-dom';
 import { CompanyProvider, useCompany } from './context/CompanyContext';
 import Home from './pages/Home.jsx';
 import Analyze from './pages/Analyze.jsx';
@@ -12,6 +12,33 @@ import Awareness from './pages/Awareness.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Simulation from './pages/Simulation.jsx';
 import Login from './pages/Login.jsx';
+
+function Nav() {
+  const { company, logout, isAuthenticated } = useCompany();
+  
+  return (
+    <nav className="nav">
+      <div className="brand">TRACE</div>
+      <div className="links">
+        <NavLink to="/" end>Home</NavLink>
+        <NavLink to="/analyze">Analyze</NavLink>
+        <NavLink to="/awareness">Awareness</NavLink>
+        <NavLink to="/dashboard">Dashboard</NavLink>
+        {isAuthenticated && <NavLink to="/simulate">Simulation</NavLink>}
+        {isAuthenticated ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 13, opacity: 0.8 }}>{company?.name}</span>
+            <button onClick={logout} style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.3)', color: '#fecaca', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>
+              Logout
+            </button>
+          </div>
+        ) : (
+          <NavLink to="/login">Login</NavLink>
+        )}
+      </div>
+    </nav>
+  );
+}
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useCompany();
