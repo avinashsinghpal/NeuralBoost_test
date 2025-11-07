@@ -10,8 +10,10 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const channelRoutes = require('./routes/channelRoutes');
 const simulationRoutes = require('./routes/simulationRoutes');
+const authRoutes = require('./routes/authRoutes');
 const qrScanRoutes = require('./routes/qrScan');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const { initializeDefaultCompanies } = require('./controllers/authController');
 
 const app = express();
 
@@ -41,6 +43,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/channels', channelRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/simulation', simulationRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/qr', qrScanRoutes);
 
 // public tracking endpoint (not under /api)
@@ -56,6 +59,8 @@ const PORT = process.env.PORT || 5001;
 try {
   require('./services/db/database');
   console.log('[DB] Database initialized');
+  // Initialize default companies after database is ready
+  initializeDefaultCompanies();
 } catch (dbErr) {
   console.error('[DB] Database initialization error:', dbErr);
 }

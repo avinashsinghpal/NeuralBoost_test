@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { api } from '../api/apiClient';
+import { useCompany } from '../context/CompanyContext';
 import ParticleCanvas from '../components/Shared/ParticleCanvas';
 
 export default function Simulation() {
@@ -24,7 +25,13 @@ export default function Simulation() {
   const [dbView, setDbView] = useState(null);
   const [loadingDb, setLoadingDb] = useState(false);
   const [showDbView, setShowDbView] = useState(false);
-
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [newEmployeeEmail, setNewEmployeeEmail] = useState('');
+  const [newEmployeeName, setNewEmployeeName] = useState('');
+  const [addingEmployee, setAddingEmployee] = useState(false);
+  
+  const { company, employees, addEmployee: addEmployeeToContext } = useCompany();
   const stats = result?.summary;
 
   async function loadPhished() {
@@ -140,9 +147,13 @@ This verification is mandatory and must be completed within the next 24 hours to
     setLoading(true);
     setResult(null);
     try {
+      // Combine selected employees with manually entered recipients
+      const manualRecipients = recipients.split(/\r|\n/).map(s => s.trim()).filter(Boolean);
+      const allRecipients = [...new Set([...selectedEmployees, ...manualRecipients])]; // Remove duplicates
+      
       const payload = {
         mode,
-        recipients: recipients.split(/\r|\n/).map(s => s.trim()).filter(Boolean),
+        recipients: allRecipients,
         meta: { department, industry },
         content: { 
           subject: subject || undefined, 
@@ -184,9 +195,179 @@ This verification is mandatory and must be completed within the next 24 hours to
             ))}
           </div>
 
+          {company && (
+            <div style={{ padding: 16, background: '#0b1220', border: '1px solid #334155', borderRadius: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#cbd5e1' }}>
+                  {company.name} Employees ({employees.length})
+                </span>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {employees.length > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const allEmails = employees.map(e => e.email);
+                          setSelectedEmployees(allEmails);
+                        }}
+                        style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #334155', background: 'transparent', color: '#60a5fa', cursor: 'pointer', fontSize: 12 }}
+                      >
+                        Select All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedEmployees([])}
+                        style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #334155', background: 'transparent', color: '#f59e0b', cursor: 'pointer', fontSize: 12 }}
+                      >
+                        Clear
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowAddEmployee(!showAddEmployee)}
+                    style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #334155', background: showAddEmployee ? 'linear-gradient(135deg, #0ea5e9, #7c3aed)' : 'transparent', color: showAddEmployee ? '#fff' : '#22c55e', cursor: 'pointer', fontSize: 12, fontWeight: showAddEmployee ? 600 : 400 }}
+                  >
+                    {showAddEmployee ? 'Cancel' : '+ Add Employee'}
+                  </button>
+                </div>
+              </div>
+
+              {showAddEmployee && (
+                <div style={{ marginBottom: 16, padding: 16, background: '#0f172a', border: '1px solid #334155', borderRadius: 8 }}>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 600, color: '#cbd5e1' }}>Add New Employee</h4>
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    <label style={{ display: 'grid', gap: 6 }}>
+                      <span style={{ fontSize: 13 }}>Email Address</span>
+                      <input
+                        type="email"
+                        value={newEmployeeEmail}
+                        onChange={(e) => setNewEmployeeEmail(e.target.value)}
+                        placeholder="employee@company.com"
+                        style={{ background: '#0b1220', color: '#e5e7eb', border: '1px solid #334155', borderRadius: 8, padding: 10, fontSize: 14 }}
+                      />
+                    </label>
+                    <label style={{ display: 'grid', gap: 6 }}>
+                      <span style={{ fontSize: 13 }}>Name (Optional)</span>
+                      <input
+                        type="text"
+                        value={newEmployeeName}
+                        onChange={(e) => setNewEmployeeName(e.target.value)}
+                        placeholder="John Doe"
+                        style={{ background: '#0b1220', color: '#e5e7eb', border: '1px solid #334155', borderRadius: 8, padding: 10, fontSize: 14 }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!newEmployeeEmail.trim()) {
+                          alert('Please enter an email address');
+                          return;
+                        }
+                        setAddingEmployee(true);
+                        try {
+                          const res = await api.auth.addEmployee({
+                            companyId: company.id,
+                            email: newEmployeeEmail.trim(),
+                            name: newEmployeeName.trim() || undefined
+                          });
+                          if (res.success) {
+                            addEmployeeToContext(res.employee);
+                            setNewEmployeeEmail('');
+                            setNewEmployeeName('');
+                            setShowAddEmployee(false);
+                          }
+                        } catch (err) {
+                          alert(err.message || 'Failed to add employee');
+                        } finally {
+                          setAddingEmployee(false);
+                        }
+                      }}
+                      disabled={addingEmployee || !newEmployeeEmail.trim()}
+                      style={{
+                        padding: '10px 16px',
+                        borderRadius: 8,
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #0ea5e9, #7c3aed)',
+                        color: '#fff',
+                        cursor: addingEmployee || !newEmployeeEmail.trim() ? 'not-allowed' : 'pointer',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        opacity: addingEmployee || !newEmployeeEmail.trim() ? 0.6 : 1
+                      }}
+                    >
+                      {addingEmployee ? 'Adding...' : 'Add Employee'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {employees.length === 0 ? (
+                <div style={{ padding: 24, textAlign: 'center', opacity: 0.7 }}>
+                  <p style={{ margin: 0, fontSize: 14 }}>No employees added yet. Click "Add Employee" to get started.</p>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 10, maxHeight: 200, overflowY: 'auto', padding: 8 }}>
+                    {employees.map((employee) => (
+                      <label
+                        key={employee.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '8px 12px',
+                          background: selectedEmployees.includes(employee.email) ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                          border: `1px solid ${selectedEmployees.includes(employee.email) ? 'rgba(59, 130, 246, 0.3)' : '#334155'}`,
+                          borderRadius: 6,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedEmployees.includes(employee.email)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedEmployees([...selectedEmployees, employee.email]);
+                            } else {
+                              setSelectedEmployees(selectedEmployees.filter(email => email !== employee.email));
+                            }
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: 13, color: '#e5e7eb' }}>{employee.email}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {selectedEmployees.length > 0 && (
+                    <div style={{ marginTop: 12, padding: 10, background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: 6, fontSize: 12, color: '#86efac' }}>
+                      {selectedEmployees.length} employee{selectedEmployees.length !== 1 ? 's' : ''} selected. They will be added to recipients when you send.
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           <label style={{ display:'grid', gap:6 }}>
             <span>Recipients (emails)</span>
+<<<<<<< HEAD
             <textarea rows={4} value={recipients} onChange={e=>setRecipients(e.target.value)} placeholder="alice@example.com\nbob@example.com" style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} />
+=======
+            <textarea 
+              rows={4} 
+              value={recipients} 
+              onChange={e=>setRecipients(e.target.value)} 
+              placeholder="alice@example.com\nbob@example.com" 
+              style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} 
+            />
+            {selectedEmployees.length > 0 && (
+              <div style={{ fontSize: 12, opacity: 0.7, padding: '8px 12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: 6, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                💡 Tip: Selected employees above will be automatically added to this list when you click "Send Simulation"
+              </div>
+            )}
+>>>>>>> 0070d32886f74ac0fec4710c16dacc9233ab5129
           </label>
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
