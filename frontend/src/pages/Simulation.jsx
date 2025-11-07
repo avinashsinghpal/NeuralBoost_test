@@ -1,8 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { api } from '../api/apiClient';
+import ParticleCanvas from '../components/Shared/ParticleCanvas';
 
 export default function Simulation() {
-  const [mode, setMode] = useState('email'); // email | sms | qr
+  const [mode, setMode] = useState('email'); // email | qr
   const [recipients, setRecipients] = useState('alice@example.com\nbob@example.com');
   const [department, setDepartment] = useState('Finance');
   const [industry, setIndustry] = useState('IT Services');
@@ -120,23 +121,6 @@ This verification is mandatory and must be completed within the next 24 hours to
     }
   }, [mode]);
 
-  // Set default SMS message when mode changes to SMS
-  useEffect(() => {
-    if (mode === 'sms') {
-      // Set default SMS message (user can edit it)
-      const defaultSMSMessage = `Security Alert: Unusual activity detected on your account. Verify immediately to secure your account.`;
-      
-      // Only set if message is empty
-      if (!message || (message.trim().length === 0)) {
-        setMessage(defaultSMSMessage);
-      }
-      
-      // Clear subject for SMS (not used)
-      if (subject) {
-        setSubject('');
-      }
-    }
-  }, [mode]);
 
   async function loadTemplateOptions(type) {
     try {
@@ -182,15 +166,17 @@ This verification is mandatory and must be completed within the next 24 hours to
   }), []);
 
   return (
-    <section className="page" style={{ color: '#e5e7eb' }}>
+    <section className="page" style={{ color: '#e5e7eb', position: 'relative', zIndex: 1 }}>
+      <ParticleCanvas />
+      <div style={{ position: 'relative', zIndex: 1 }}>
       <div style={{ position:'relative', overflow:'hidden', borderRadius: 16, padding: 18, background: 'linear-gradient(180deg,#0b0f1e 0%, #0b1220 100%)', border: '1px solid #1f2937' }}>
         <Glow />
         <h2 style={{ margin: 0 }}>Simulation Campaign</h2>
-        <p style={{ marginTop: 6, opacity: .8 }}>Send simulated phishing via Email, SMS, or QR and track who gets phished.</p>
+        <p style={{ marginTop: 6, opacity: .8 }}>Send simulated phishing via Email or QR and track who gets phished.</p>
 
         <form onSubmit={onSend} className="card" style={{ background:'#0f172a', border:'1px solid #1f2937', borderRadius: 12, padding: 16, display:'grid', gap: 12 }}>
           <div style={{ display:'flex', gap: 8, flexWrap:'wrap' }}>
-            {['email','sms','qr'].map(m => (
+            {['email','qr'].map(m => (
               <button key={m} type="button" onClick={() => setMode(m)}
                 style={{ padding: '8px 12px', borderRadius: 999, border: '1px solid #334155', background: mode===m? `linear-gradient(135deg,${accent.from},${accent.to})` : 'transparent', color: mode===m? '#fff':'#e5e7eb', cursor:'pointer' }}>
                 {m.toUpperCase()}
@@ -199,13 +185,8 @@ This verification is mandatory and must be completed within the next 24 hours to
           </div>
 
           <label style={{ display:'grid', gap:6 }}>
-            <span>Recipients ({mode==='sms' ? 'phone numbers (e.g., +1234567890 or 1234567890)' : 'emails'})</span>
-            <textarea rows={4} value={recipients} onChange={e=>setRecipients(e.target.value)} placeholder={mode==='sms'?'+1234567890\n+19876543210\n9876543210':'alice@example.com\nbob@example.com'} style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} />
-            {mode === 'sms' && (
-              <div style={{ fontSize: 12, opacity: 0.7, padding: '8px 12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: 6, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                <strong>💡 Phone Number Format:</strong> Enter phone numbers with or without country code. US numbers can be entered as 10 digits (e.g., 9876543210) or with country code (+19876543210). International numbers should include country code (e.g., +441234567890).
-              </div>
-            )}
+            <span>Recipients (emails)</span>
+            <textarea rows={4} value={recipients} onChange={e=>setRecipients(e.target.value)} placeholder="alice@example.com\nbob@example.com" style={{ background:'#0b1220', color:'#e5e7eb', border:'1px solid #334155', borderRadius:10, padding:10 }} />
           </label>
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
@@ -758,6 +739,7 @@ This verification is mandatory and must be completed within the next 24 hours to
         .card { transition: transform .25s ease, box-shadow .25s ease; }
         .card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,.35); }
       `}</style>
+      </div>
     </section>
   );
 }

@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import QRScanner from '../components/QRScanner';
+import ParticleCanvas from '../components/Shared/ParticleCanvas';
 
 export default function Analyze() {
   const [subject, setSubject] = useState('');
@@ -124,7 +125,9 @@ export default function Analyze() {
   }, []); // Only run on mount
 
   return (
-    <section className="page">
+    <section className="page" style={{ position: 'relative', zIndex: 1 }}>
+      <ParticleCanvas />
+      <div style={{ position: 'relative', zIndex: 1 }}>
       {/* Mode Selection Card */}
       <div style={{ 
         background: 'linear-gradient(135deg, rgba(124,58,237,0.1) 0%, rgba(14,165,233,0.1) 100%)',
@@ -827,6 +830,7 @@ export default function Analyze() {
           100% { background-position: 200% 0; }
         }
       `}</style>
+      </div>
     </section>
   );
 }
