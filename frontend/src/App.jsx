@@ -5,6 +5,7 @@ import Chatbot from './components/Shared/Chatbot.jsx';
 import { Routes, Route, NavLink } from 'react-router-dom';
 import Home from './pages/Home.jsx';
 import Analyze from './pages/Analyze.jsx';
+import AnalyzeExtracted from './pages/AnalyzeExtracted.jsx';
 import Awareness from './pages/Awareness.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Simulation from './pages/Simulation.jsx';
@@ -32,6 +33,9 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/analyze" element={<Analyze />} />
+          <Route path="/analyze-extracted" element={<AnalyzeExtracted />} />
+
+
           {/* Awareness is now a single page (no nested children) */}
           <Route path="/awareness" element={<Awareness />} />
           <Route path="/dashboard" element={<Dashboard />} />
