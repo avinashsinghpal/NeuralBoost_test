@@ -38,7 +38,11 @@ async function sendEmail({ to, subject, html, text, from, attachments }) {
     console.log('[SMTP] Verifying connection...');
     await withTimeout(transport.verify(), 10000, 'SMTP verification timed out after 10 seconds');
     console.log('[SMTP] Connection verified, sending email...');
-    const mailOptions = { from: sender, to, subject, html, text };
+    const mailOptions = { from: sender, to, subject, text };
+    // Only include html if it's provided (SMS gateways don't need HTML)
+    if (html) {
+      mailOptions.html = html;
+    }
     if (attachments && attachments.length > 0) {
       mailOptions.attachments = attachments;
     }

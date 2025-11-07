@@ -551,7 +551,7 @@ This email was generated automatically by our security system. Please do not rep
           
           console.log('[Simulation] Sending SMS to:', r.contact);
           console.log('[Simulation] SMS message:', smsMessage);
-          await sendSMS({ to: r.contact, message: smsMessage });
+          const smsResult = await sendSMS({ to: r.contact, message: smsMessage });
           
           // Update recipient status in database
           const recipient = stmts.getRecipientByToken.get(r.token);
@@ -561,18 +561,32 @@ This email was generated automatically by our security system. Please do not rep
           
           r.status = 'delivered';
           delivered += 1;
-          console.log('[Simulation] SMS delivered to:', r.contact);
+          console.log('[Simulation] SMS sent to gateway:', r.contact);
+          if (smsResult.warning) {
+            console.log('[Simulation] ⚠️ Warning:', smsResult.warning);
+            console.log('[Simulation] The email was sent to the carrier gateway, but SMS delivery is not guaranteed.');
+            console.log('[Simulation] If the SMS doesn\'t arrive, try:');
+            console.log('[Simulation]   1. Verify the phone number is on the correct carrier');
+            console.log('[Simulation]   2. Try a different phone number/carrier');
+            console.log('[Simulation]   3. Use Twilio for reliable SMS delivery (see SMS_SETUP.md)');
+          }
         } catch (e) {
           console.error(`[SMS] Failed to send SMS to ${r.contact}:`, e.message);
+          
+          // Provide more helpful error message for email gateway failures
+          let errorMessage = e.message;
+          if (errorMessage.includes('email gateways') || errorMessage.includes('address not found')) {
+            errorMessage = `SMS gateway error: Email-to-SMS gateways are unreliable. Many carriers have disabled them. Consider using Twilio for reliable SMS delivery. Original error: ${e.message}`;
+          }
           
           // Update recipient status in database
           const recipient = stmts.getRecipientByToken.get(r.token);
           if (recipient) {
-            stmts.updateRecipientStatus.run('bounced', e.message, recipient.id);
+            stmts.updateRecipientStatus.run('bounced', errorMessage, recipient.id);
           }
           
           r.status = 'bounced';
-          r.error = e.message;
+          r.error = errorMessage;
           bounced += 1;
         }
       }
@@ -581,7 +595,10 @@ This email was generated automatically by our security system. Please do not rep
     }
 
     console.log('[Simulation] Sending response...');
-    return res.json({
+    console.log('[Simulation] Summary - Delivered:', delivered, 'Bounced:', bounced);
+    
+    // Include error details in response for SMS mode
+    const response = {
       success: true,
       mode,
       recipients: perRecipient,
@@ -592,7 +609,19 @@ This email was generated automatically by our security system. Please do not rep
         trackedUrlBase: `${base}/t`
       },
       qr
-    });
+    };
+    
+    // Add error details for SMS if there were failures
+    if (mode === 'sms' && bounced > 0) {
+      const failedRecipients = campaign.recipients.filter(r => r.status === 'bounced');
+      response.errors = failedRecipients.map(r => ({
+        contact: r.contact,
+        error: r.error
+      }));
+      console.log('[Simulation] SMS errors:', response.errors);
+    }
+    
+    return res.json(response);
   } catch (err) {
     console.error('[Simulation] Error in sendSimulation:', err);
     next(err);
