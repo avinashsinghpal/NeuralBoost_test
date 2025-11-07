@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { api } from '../api/apiClient';
 import { useCompany } from '../context/CompanyContext';
-import { useCompany } from '../context/CompanyContext';
 
 export default function Simulation() {
   const [mode, setMode] = useState('email'); // email | qr

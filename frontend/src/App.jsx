@@ -3,7 +3,7 @@ import React from 'react';
 import SOSButton from './components/Shared/SOSButton.jsx';
 import Chatbot from './components/Shared/Chatbot.jsx';
 import AppShell from './components/chrome/AppShell.jsx';
-import { Routes, Route, Navigate, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { CompanyProvider, useCompany } from './context/CompanyContext';
 import Home from './pages/Home.jsx';
 import Analyze from './pages/Analyze.jsx';
