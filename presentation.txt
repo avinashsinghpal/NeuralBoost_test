@@ -1,0 +1,140 @@
+[SLIDE 1]
+Title: NeuralBoost: Proactive Phishing Defense
+Subtitle: An Interactive & Intelligent Security Awareness Platform
+Content:
+- A deep dive into the future of anti-phishing technology.
+- Presenter: [Your Name/Team Name]
+- Date: [Date]
+Visual Idea: A modern, abstract background with the NeuralBoost logo (a stylized brain or shield with network lines). The title should be prominent and clean.
+
+Speaker Notes: "Welcome everyone. Today, we're excited to introduce NeuralBoost, our intelligent, proactive platform designed to tackle one of the most persistent threats in cybersecurity today: phishing."
+
+---
+
+[SLIDE 2]
+Title: The Problem: The Evolving Threat of Phishing
+Content:
+- Phishing attacks are up 61% year-over-year.
+- They are the #1 cause of data breaches.
+- Traditional filters are reactive, not proactive. They catch known threats but miss sophisticated, zero-day attacks.
+- Human error remains the weakest link in the security chain.
+Visual Idea: A split-screen visual. On the left, an icon of a hacker with phishing hooks. On the right, statistics like "61%" and "#1 Cause" in large, bold fonts. Use a dark, slightly alarming color scheme (reds and dark grays).
+
+Speaker Notes: "The landscape of cyber threats is constantly evolving, and phishing remains at the forefront. Attacks are becoming more sophisticated, easily bypassing traditional defenses. The core issue is that these defenses are reactive, and they fail to address the crucial human element."
+
+---
+
+[SLIDE 3]
+Title: Our Solution: A Multi-Layered, Intelligent Defense
+Content:
+- **Real-time Analysis:** Proactively scans emails, URLs, and attachments before they reach the user.
+- **Interactive Education:** Engages users with simulations and real-world examples.
+- **Comprehensive Dashboard:** Provides clear, actionable insights for security teams.
+- **Seamless Integration:** A browser extension for immediate, in-context protection.
+Visual Idea: A central shield icon labeled "NeuralBoost". Four smaller icons should surround it, connected by lines, representing "Analysis" (a magnifying glass), "Education" (a graduation cap), "Dashboard" (a chart), and "Integration" (a puzzle piece).
+
+Speaker Notes: "NeuralBoost addresses this challenge with a multi-layered approach. We don't just block threats; we analyze them in real-time, educate the user, provide a powerful analytics dashboard, and integrate directly into their workflow for a seamless protective experience."
+
+---
+
+[SLIDE 4]
+Title: Core Feature 1: NLP Content Analysis
+Content:
+- **What it does:** Scans text for phishing intent, not just keywords.
+- **How it works:** Uses Natural Language Processing to understand context, urgency, and suspicious requests.
+- **Live Demo Visual:**
+    - An input box with a sample phishing email text.
+    - The text is analyzed, and suspicious phrases like "URGENT," "verify your account," and "clicking this link" are highlighted in red and yellow.
+    - A "Threat Score" gauge that moves from low to high (e.g., 85/100).
+Visual Idea: A large, clear depiction of the interactive demo from our HTML file. Show the text being highlighted and the threat score prominently.
+
+Speaker Notes: "First, let's look at our NLP engine. Instead of just flagging keywords, it understands the *intent* behind the message. As you can see in this simulation, it identifies phrases that create false urgency and flags them, providing a clear threat score."
+
+---
+
+[SLIDE 5]
+Title: Core Feature 2: Advanced URL & QR Code Analysis
+Content:
+- **URL Scanning:**
+    - Detects homoglyph attacks (e.g., "microsft-online.com").
+    - Checks domain reputation and age.
+    - Scans against real-time threat intelligence blacklists.
+- **QR Code Security:**
+    - Decodes QR codes in real-time.
+    - Analyzes the embedded link *before* the user is redirected.
+Visual Idea: A two-panel slide. Left panel shows a URL being deconstructed, with "microsft" highlighted in red. Right panel shows a QR code with a scanning animation that reveals a malicious URL, also highlighted in red.
+
+Speaker Notes: "Next is our URL and QR code analysis. We go beyond simple blacklists. We detect subtle visual tricks like homoglyphs, as seen here. We also apply this same rigorous analysis to QR codes, neutralizing the growing threat of 'quishing'."
+
+---
+
+[SLIDE 6]
+Title: Core Feature 3: Sender Verification
+Content:
+- **What it does:** Verifies the sender's true identity.
+- **How it works:**
+    - Analyzes email headers.
+    - Performs SPF, DKIM, and DMARC checks.
+    - Flags mismatches and potential spoofing attempts.
+- **Live Demo Visual:**
+    - A simplified email header view.
+    - The "From" address is `security@yourbank.com`.
+    - The "Received-SPF" header clearly shows `fail`.
+    - A large, clear verdict stamp: "SPOOFING LIKELY" in red.
+Visual Idea: A visual representation of the sender analysis demo. Use a stamp or a large, bold text block for the verdict to make it impactful.
+
+Speaker Notes: "A common tactic is sender spoofing. Our platform automatically analyzes the email's digital fingerprint—its headers—to verify authenticity. If the SPF record fails, as shown in this demo, we immediately flag it as a likely spoofing attempt, alerting the user."
+
+---
+
+[SLIDE 7]
+Title: System Architecture
+Content:
+- A high-level overview of the NeuralBoost ecosystem.
+- **Clients:** React Frontend & Browser Extension.
+- **Backend:** Node.js/Express API handles all logic.
+- **Analysis Engine:** A suite of micro-services for NLP, URL scanning, etc.
+- **Data Layer:** SQLite database for storing results and a connection to external threat intelligence APIs.
+Visual Idea: Use the exact SVG architecture diagram from the `project_visualization.html` file. It's clean, professional, and accurately represents the system flow.
+
+Speaker Notes: "Here's a look at our system architecture. It's a modern, decoupled system with a React frontend and a powerful Node.js backend. The core is our Analysis Engine, where specialized modules work together to assess threats. This design ensures scalability and allows us to easily add new analysis modules in the future."
+
+---
+
+[SLIDE 8]
+Title: Technology Stack
+Content:
+- **Backend:** Node.js, Express, better-sqlite3, Jest
+- **Frontend:** React, Vite, Tailwind CSS, React Three Fiber, Recharts
+- **DevOps & Tooling:** Concurrently, Nodemon, ESLint, Git
+Visual Idea: A clean, multi-column layout. Each column is a category (Backend, Frontend, etc.). Under each category, display the logos of the respective technologies. This is visually more appealing than just text.
+
+Speaker Notes: "We've built NeuralBoost on a foundation of modern, robust, and scalable technologies. Our backend is powered by Node.js for performance, while the frontend uses React and Vite for a fast, responsive user experience. We also leverage powerful libraries like React Three Fiber for data visualization."
+
+---
+
+[SLIDE 9]
+Title: Live Simulation: Tying It All Together
+Content:
+- A step-by-step walkthrough of a full phishing attack analysis.
+- **1. Ingestion:** Email is received.
+- **2. NLP Scan:** Content is flagged for urgency.
+- **3. URL Check:** Malicious link is identified.
+- **4. Sender Verify:** SPF check fails.
+- **5. Scoring:** A high threat score is calculated.
+- **6. Verdict:** The email is classified as PHISHING and quarantined.
+Visual Idea: Use the "Full Simulation" flow diagram from the HTML file. Animate each step lighting up sequentially as you talk through the process.
+
+Speaker Notes: "Now, let's see how it all works together. This simulation shows the journey of a phishing email through the NeuralBoost system. From initial ingestion, through NLP, URL, and sender checks, a comprehensive threat score is compiled, leading to a definitive verdict. This entire process happens in seconds."
+
+---
+
+[SLIDE 10]
+Title: Thank You & Q&A
+Content:
+- **Recap:** NeuralBoost provides proactive, intelligent, and educational phishing defense.
+- **Next Steps:** [e.g., Pilot Program, Open Source Contribution, etc.]
+- **Contact:** [Your Email / Website]
+Visual Idea: A clean, simple slide with the NeuralBoost logo, your contact information, and a thank you message.
+
+Speaker Notes: "In summary, NeuralBoost is more than just a filter; it's a comprehensive security platform that protects and educates. Thank you for your time. I'd now be happy to answer any questions you may have."
