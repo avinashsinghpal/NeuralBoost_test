@@ -67,5 +67,11 @@ export const api = {
       method: 'POST', 
       body: JSON.stringify({ url, user_hash }) 
     })
+  },
+  auth: {
+    login: (payload) => request('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
+    signup: (payload) => request('/auth/signup', { method: 'POST', body: JSON.stringify(payload) }),
+    getEmployees: (companyId) => request(`/auth/employees?companyId=${companyId}`),
+    addEmployee: (payload) => request('/auth/employees', { method: 'POST', body: JSON.stringify(payload) })
   }
 };
