@@ -47,6 +47,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/qr', qrScanRoutes);
 
 // public tracking endpoint (not under /api)
+// This route must be accessible without authentication for phishing simulation
 app.get('/t/:token', require('./controllers/simulationController').trackToken);
 
 // 404 and error handlers
