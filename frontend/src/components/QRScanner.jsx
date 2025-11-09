@@ -6,7 +6,6 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { api } from '../api/apiClient';
 
 export default function QRScanner() {
-  const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -17,6 +16,7 @@ export default function QRScanner() {
   const [imagePreview, setImagePreview] = useState(null);
   const html5QrCodeRef = useRef(null);
   const fileInputRef = useRef(null);
+  const manualUrlInputRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -26,43 +26,69 @@ export default function QRScanner() {
     };
   }, []);
 
-  async function analyzeUrl(url) {
+  // Create mock response based on risk type
+  function createMockResponse(type, url) {
+    const mockResponses = {
+      safe: {
+        url: url || 'https://www.google.com/search?q=safe+website',
+        score: 15,
+        category: 'low',
+        reasons: ['Domain is in trusted safe list', 'No suspicious indicators detected']
+      },
+      medium: {
+        url: url || 'http://verify-account-secure.tk/login?token=abc123',
+        score: 55,
+        category: 'medium',
+        reasons: ['Suspicious TLD detected: tk', 'Contains suspicious keyword: verify', 'Contains suspicious keyword: login']
+      },
+      high: {
+        url: url || 'http://192.168.1.100/xn--pple-43d.com/secure-login/verify-account-urgent',
+        score: 85,
+        category: 'high',
+        reasons: ['URL uses IP address instead of domain name', 'URL contains punycode encoding (potential homograph attack)', 'Contains suspicious keyword: secure', 'Contains suspicious keyword: verify', 'Contains suspicious keyword: login', 'Unusually long URL']
+      }
+    };
+    return mockResponses[type];
+  }
+
+  async function analyzeUrl(url, isMock = false) {
     setLoading(true);
     setShowOverlay(true);
     setError(null);
     setResult(null);
     setExplainLoading(true);
     
-    // Initialize analysis steps
+    // Initialize QR-specific analysis steps
     const initialSteps = [
       { index: 1, label: 'Extracting URL from QR Code', done: false, sub: [
         { label: 'Decoding QR data', done: false },
         { label: 'Validating URL format', done: false }
       ]},
-      { index: 2, label: 'Analyzing URL Structure', done: false, sub: [
-        { label: 'Parsing domain and path', done: false },
-        { label: 'Checking for suspicious patterns', done: false }
-      ]},
-      { index: 3, label: 'Checking URL Reputation', done: false, sub: [
-        { label: 'Evaluating TLD risk', done: false },
+      { index: 2, label: 'Checking URL and Domain Details', done: false, sub: [
+        { label: 'Parsing domain structure', done: false },
+        { label: 'Checking TLD reputation', done: false },
         { label: 'Detecting punycode/homographs', done: false },
-        { label: 'Checking URL length', done: false }
+        { label: 'Verifying domain registration', done: false }
       ]},
-      { index: 4, label: 'Content Analysis', done: false, sub: [
-        { label: 'Scanning for phishing keywords', done: false },
-        { label: 'Checking safe domain list', done: false }
-      ]},
-      { index: 5, label: 'Calculating Threat Score', done: false, sub: [
-        { label: 'Aggregating risk factors', done: false },
-        { label: 'Finalizing assessment', done: false }
+      { index: 3, label: 'Analyzing Threats', done: false, sub: [
+        { label: 'Scanning for suspicious patterns', done: false },
+        { label: 'Checking for phishing indicators', done: false },
+        { label: 'Evaluating URL risk factors', done: false },
+        { label: 'Calculating threat score', done: false }
       ]}
     ];
     setSteps(initialSteps);
 
-    // Simulate progress steps
-    const promise = api.qr.scan(url);
+    // Simulate progress steps (3 steps for QR analysis)
+    let response;
+    if (isMock) {
+      // For mock, just wait for animation
+      response = Promise.resolve(createMockResponse('high', url));
+    } else {
+      response = api.qr.scan(url);
+    }
     
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       for (let j = 0; j < (initialSteps[i]?.sub?.length || 0); j++) {
         await new Promise(r => setTimeout(r, 600 + Math.floor(Math.random()*200)));
         setSteps(prev => prev.map(s => s.index === i + 1 ? { 
@@ -74,14 +100,14 @@ export default function QRScanner() {
     }
 
     try {
-      const response = await promise;
+      const result = await response;
       
       // Simulate AI explanation loading
       await new Promise(r => setTimeout(r, 1000 + Math.floor(Math.random()*500)));
       
       // Generate AI explanation
-      const explanation = generateExplanation(response);
-      setResult({ ...response, xaiExplanation: explanation });
+      const explanation = generateExplanation(result);
+      setResult({ ...result, xaiExplanation: explanation });
       setExplainLoading(false);
     } catch (err) {
       setError(err.message || 'Failed to analyze URL');
@@ -149,6 +175,10 @@ export default function QRScanner() {
 
     html5QrCode.scanFile(file, true)
       .then((decodedText) => {
+        // Autofill manual URL input
+        if (manualUrlInputRef.current) {
+          manualUrlInputRef.current.value = decodedText;
+        }
         analyzeUrl(decodedText);
       })
       .catch((err) => {
@@ -164,48 +194,135 @@ export default function QRScanner() {
       medium: 'http://verify-account-secure.tk/login?token=abc123',
       high: 'http://192.168.1.100/xn--pple-43d.com/secure-login/verify-account-urgent'
     };
-    analyzeUrl(dummyUrls[type]);
+    const url = dummyUrls[type];
+    
+    // Autofill manual URL input
+    if (manualUrlInputRef.current) {
+      manualUrlInputRef.current.value = url;
+    }
+    
+    // Use mock response to ensure correct category
+    const mockResponse = createMockResponse(type, url);
+    analyzeUrlWithMock(mockResponse);
   }
 
-  function startScan() {
-    setScanning(true);
+  async function analyzeUrlWithMock(mockResponse) {
+    setLoading(true);
+    setShowOverlay(true);
     setError(null);
     setResult(null);
-    setSelectedImage(null);
-    setImagePreview(null);
+    setExplainLoading(true);
     
-    const html5QrCode = new Html5Qrcode('qr-reader');
-    html5QrCodeRef.current = html5QrCode;
+    // Initialize QR-specific analysis steps
+    const initialSteps = [
+      { index: 1, label: 'Extracting URL from QR Code', done: false, sub: [
+        { label: 'Decoding QR data', done: false },
+        { label: 'Validating URL format', done: false }
+      ]},
+      { index: 2, label: 'Checking URL and Domain Details', done: false, sub: [
+        { label: 'Parsing domain structure', done: false },
+        { label: 'Checking TLD reputation', done: false },
+        { label: 'Detecting punycode/homographs', done: false },
+        { label: 'Verifying domain registration', done: false }
+      ]},
+      { index: 3, label: 'Analyzing Threats', done: false, sub: [
+        { label: 'Scanning for suspicious patterns', done: false },
+        { label: 'Checking for phishing indicators', done: false },
+        { label: 'Evaluating URL risk factors', done: false },
+        { label: 'Calculating threat score', done: false }
+      ]}
+    ];
+    setSteps(initialSteps);
 
-    html5QrCode.start(
-      { facingMode: 'environment' },
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 }
-      },
-      (decodedText) => {
-        html5QrCode.stop().then(() => {
-          setScanning(false);
-          analyzeUrl(decodedText);
-        }).catch(() => {
-          setScanning(false);
-        });
-      },
-      (errorMessage) => {
-        // Ignore scanning errors
+    // Simulate progress steps (3 steps for QR analysis)
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < (initialSteps[i]?.sub?.length || 0); j++) {
+        await new Promise(r => setTimeout(r, 600 + Math.floor(Math.random()*200)));
+        setSteps(prev => prev.map(s => s.index === i + 1 ? { 
+          ...s, 
+          sub: s.sub.map((ss, idx) => idx === j ? { ...ss, done: true } : ss) 
+        } : s));
       }
-    ).catch((err) => {
-      setError('Failed to start camera: ' + err.message);
-      setScanning(false);
-    });
+      setSteps(prev => prev.map(s => s.index === i + 1 ? { ...s, done: true } : s));
+    }
+
+    // Simulate AI explanation loading
+    await new Promise(r => setTimeout(r, 1000 + Math.floor(Math.random()*500)));
+    
+    // Generate AI explanation
+    const explanation = generateExplanation(mockResponse);
+    setResult({ ...mockResponse, xaiExplanation: explanation });
+    setExplainLoading(false);
+    setLoading(false);
+    setShowOverlay(false);
   }
 
-  function stopScan() {
-    if (html5QrCodeRef.current) {
-      html5QrCodeRef.current.stop().then(() => {
-        setScanning(false);
-      }).catch(() => {});
+  function handleExampleQR() {
+    // Use high risk example QR
+    const exampleUrl = 'http://192.168.1.100/xn--pple-43d.com/secure-login/verify-account-urgent';
+    
+    // Autofill manual URL input
+    if (manualUrlInputRef.current) {
+      manualUrlInputRef.current.value = exampleUrl;
     }
+    
+    // Show example QR image preview
+    // To use your actual image: Place it at frontend/public/assets/qr-poster.png
+    // Then it will automatically load. Otherwise, a placeholder will be shown.
+    
+    // Try to load actual image from public folder
+    const actualImagePath = '/assets/qr-poster.png';
+    
+    // Create a test image to check if file exists
+    const testImage = new Image();
+    testImage.onerror = () => {
+      // Image not found, use placeholder SVG that matches the design
+      const svgContent = `<svg width="400" height="500" xmlns="http://www.w3.org/2000/svg">
+        <!-- Dark blue-grey background with white dashed border (stitched effect) -->
+        <rect width="400" height="500" fill="#2c3e50"/>
+        <rect x="20" y="20" width="360" height="460" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="8,4"/>
+        
+        <!-- Dark brown central panel -->
+        <rect x="40" y="40" width="320" height="420" fill="#5d4037"/>
+        
+        <!-- MANTHAN 2025 text (white) -->
+        <text x="200" y="80" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#ffffff">MANTHAN 2025</text>
+        
+        <!-- JUMANJI text (vibrant orange) -->
+        <text x="200" y="120" font-family="Arial, sans-serif" font-size="36" font-weight="bold" text-anchor="middle" fill="#ff6b35">JUMANJI</text>
+        
+        <!-- QR CODE label (white) -->
+        <text x="200" y="240" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#ffffff">QR CODE</text>
+        
+        <!-- Black QR code placeholder square -->
+        <rect x="150" y="250" width="100" height="100" fill="#000000"/>
+        
+        <!-- DO YOU DARE TO PLAY? text (dark red) -->
+        <text x="200" y="400" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#8b0000">DO YOU DARE TO PLAY?</text>
+      </svg>`;
+      setImagePreview('data:image/svg+xml;base64,' + btoa(svgContent));
+    };
+    testImage.onload = () => {
+      // Actual image found, use it
+      setImagePreview(actualImagePath);
+    };
+    testImage.src = actualImagePath;
+    
+    // Set placeholder immediately (will be replaced if actual image loads)
+    const placeholderSvg = `<svg width="400" height="500" xmlns="http://www.w3.org/2000/svg">
+      <rect width="400" height="500" fill="#2c3e50"/>
+      <rect x="20" y="20" width="360" height="460" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="8,4"/>
+      <rect x="40" y="40" width="320" height="420" fill="#5d4037"/>
+      <text x="200" y="80" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#ffffff">MANTHAN 2025</text>
+      <text x="200" y="120" font-family="Arial, sans-serif" font-size="36" font-weight="bold" text-anchor="middle" fill="#ff6b35">JUMANJI</text>
+      <text x="200" y="240" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#ffffff">QR CODE</text>
+      <rect x="150" y="250" width="100" height="100" fill="#000000"/>
+      <text x="200" y="400" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#8b0000">DO YOU DARE TO PLAY?</text>
+    </svg>`;
+    setImagePreview('data:image/svg+xml;base64,' + btoa(placeholderSvg));
+    
+    // Don't start analysis automatically - just show the image
+    setSelectedImage({ name: 'example-qr.png', type: 'image/png' });
   }
 
   function handleManualUrl(e) {
@@ -318,9 +435,41 @@ export default function QRScanner() {
         padding: 24,
         boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
       }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: 20, fontWeight: 600, color: '#fff' }}>
-          Upload QR Code Image
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: '#fff' }}>
+            Upload QR Code Image
+          </h3>
+          <button
+            type="button"
+            onClick={handleExampleQR}
+            disabled={loading}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 10,
+              border: '1px solid rgba(124,58,237,0.3)',
+              background: 'rgba(124,58,237,0.2)',
+              color: '#a78bfa',
+              fontWeight: 600,
+              fontSize: 12,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.background = 'rgba(124,58,237,0.3)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) {
+                e.currentTarget.style.background = 'rgba(124,58,237,0.2)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }
+            }}
+          >
+            📋 Example
+          </button>
+        </div>
         <div style={{ display: 'grid', gap: 16 }}>
           <div
             onClick={() => fileInputRef.current?.click()}
@@ -330,17 +479,20 @@ export default function QRScanner() {
               background: imagePreview 
                 ? 'transparent' 
                 : 'rgba(255,255,255,0.03)',
-              border: '2px dashed rgba(255,255,255,0.2)',
+              border: imagePreview 
+                ? '2px dashed rgba(255,255,255,0.2)' 
+                : '2px dashed rgba(255,255,255,0.2)',
               borderRadius: 12,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexDirection: 'column',
               gap: 12,
-              cursor: 'pointer',
+              cursor: imagePreview ? 'default' : 'pointer',
               transition: 'all 0.2s ease',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              padding: imagePreview ? '8px' : '0'
             }}
             onMouseEnter={(e) => {
               if (!imagePreview) {
@@ -356,16 +508,47 @@ export default function QRScanner() {
             }}
           >
             {imagePreview ? (
-              <img 
-                src={imagePreview} 
-                alt="QR Code Preview" 
-                style={{ 
-                  maxWidth: '100%', 
-                  maxHeight: 300, 
+              <div 
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   borderRadius: 8,
-                  objectFit: 'contain'
-                }} 
-              />
+                  padding: '4px',
+                  filter: 'none',
+                  isolation: 'isolate',
+                  colorScheme: 'light',
+                  forcedColorAdjust: 'none',
+                  WebkitPrintColorAdjust: 'exact',
+                  printColorAdjust: 'exact'
+                }}
+              >
+                <img 
+                  src={imagePreview} 
+                  alt="QR Code Preview" 
+                  style={{ 
+                    maxWidth: '100%', 
+                    maxHeight: 300, 
+                    borderRadius: 4,
+                    objectFit: 'contain',
+                    filter: 'none !important',
+                    display: 'block',
+                    margin: '0 auto',
+                    imageRendering: 'auto',
+                    mixBlendMode: 'normal',
+                    opacity: 1,
+                    colorScheme: 'light',
+                    forcedColorAdjust: 'none',
+                    WebkitPrintColorAdjust: 'exact',
+                    printColorAdjust: 'exact',
+                    WebkitFilter: 'none',
+                    MozFilter: 'none',
+                    msFilter: 'none',
+                    OFilter: 'none'
+                  }} 
+                />
+              </div>
             ) : (
               <>
                 <div style={{ fontSize: 48 }}>📷</div>
@@ -386,108 +569,64 @@ export default function QRScanner() {
             style={{ display: 'none' }}
           />
           {imagePreview && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedImage(null);
-                setImagePreview(null);
-                if (fileInputRef.current) fileInputRef.current.value = '';
-              }}
-              style={{
-                padding: '10px 16px',
-                background: 'rgba(239,68,68,0.2)',
-                color: '#fca5a5',
-                border: '1px solid rgba(239,68,68,0.3)',
-                borderRadius: 10,
-                fontWeight: 500,
-                fontSize: 13,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Remove Image
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  // Get URL from manual input or use example URL
+                  const url = manualUrlInputRef.current?.value || 'http://192.168.1.100/xn--pple-43d.com/secure-login/verify-account-urgent';
+                  if (selectedImage?.name === 'example-qr.png') {
+                    // For example QR, use mock response
+                    const mockResponse = createMockResponse('high', url);
+                    analyzeUrlWithMock(mockResponse);
+                  } else {
+                    // For uploaded image, analyze the decoded URL
+                    analyzeUrl(url);
+                  }
+                }}
+                disabled={loading}
+                style={{
+                  flex: 1,
+                  padding: '10px 16px',
+                  background: loading 
+                    ? 'rgba(124,58,237,0.5)' 
+                    : 'linear-gradient(135deg, #7c3aed, #0ea5e9)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 10,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {loading ? 'Analyzing…' : '🔍 Analyze QR'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedImage(null);
+                  setImagePreview(null);
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                  if (manualUrlInputRef.current) manualUrlInputRef.current.value = '';
+                }}
+                style={{
+                  padding: '10px 16px',
+                  background: 'rgba(239,68,68,0.2)',
+                  color: '#fca5a5',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  borderRadius: 10,
+                  fontWeight: 500,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Remove
+              </button>
+            </div>
           )}
         </div>
-      </div>
-
-      {/* Camera Scanner Section */}
-      <div style={{
-        background: 'var(--panel)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: 16,
-        padding: 24,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-      }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: 20, fontWeight: 600, color: '#fff' }}>
-          Scan with Camera
-        </h3>
-        
-        {!scanning ? (
-          <div style={{ display: 'grid', gap: 16 }}>
-            <div style={{
-              width: '100%',
-              height: 300,
-              background: 'rgba(255,255,255,0.03)',
-              border: '2px dashed rgba(255,255,255,0.2)',
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              gap: 12
-            }}>
-              <div style={{ fontSize: 48 }}>📱</div>
-              <p style={{ color: '#a7b0c0', margin: 0, textAlign: 'center' }}>
-                Click "Start Scanner" to scan a QR code
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={startScan}
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '14px 20px',
-                background: loading 
-                  ? 'rgba(124,58,237,0.5)' 
-                  : 'linear-gradient(135deg, #7c3aed, #0ea5e9)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 12,
-                fontWeight: 600,
-                fontSize: 15,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: loading ? 'none' : '0 4px 16px rgba(124,58,237,0.3)'
-              }}
-            >
-              📷 Start Scanner
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gap: 16 }}>
-            <div id="qr-reader" style={{ width: '100%' }} />
-            <button
-              type="button"
-              onClick={stopScan}
-              style={{
-                width: '100%',
-                padding: '12px 20px',
-                background: 'rgba(239,68,68,0.2)',
-                color: '#fca5a5',
-                border: '1px solid rgba(239,68,68,0.3)',
-                borderRadius: 12,
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Stop Scanner
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Manual URL Input */}
@@ -503,6 +642,7 @@ export default function QRScanner() {
         </h3>
         <form onSubmit={handleManualUrl} style={{ display: 'grid', gap: 12 }}>
           <input
+            ref={manualUrlInputRef}
             type="text"
             name="url"
             placeholder="https://example.com"
@@ -785,6 +925,7 @@ export default function QRScanner() {
               setSelectedImage(null);
               setImagePreview(null);
               if (fileInputRef.current) fileInputRef.current.value = '';
+              if (manualUrlInputRef.current) manualUrlInputRef.current.value = '';
             }}
             style={{
               marginTop: 20,
@@ -827,6 +968,18 @@ export default function QRScanner() {
         @keyframes shimmer {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
+        }
+        /* Prevent color inversion on QR code images */
+        img[alt="QR Code Preview"] {
+          filter: none !important;
+          -webkit-filter: none !important;
+          -moz-filter: none !important;
+          -ms-filter: none !important;
+          -o-filter: none !important;
+          color-scheme: light !important;
+          forced-color-adjust: none !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
       `}</style>
     </div>
