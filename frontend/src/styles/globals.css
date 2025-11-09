@@ -1,8 +1,10 @@
+@import "tailwindcss";
+
 :root{ --bg:#0b0b12; --panel:#141422; --muted:#8e8ea0; --text:#e7e7ef; --brand:#7c3aed; --ok:#30d158; --warn:#ff9f0a; --danger:#ff3b30; }
 *{ box-sizing:border-box }
 html,body,#root{ height:100% }
 body{ margin:0; font-family:Inter,system-ui,Arial,sans-serif; background:radial-gradient(1000px 700px at 10% -10%, #1b1b2e, transparent), var(--bg); color:var(--text) }
-.nav{ display:flex; align-items:center; justify-content:space-between; padding:16px 24px; position:sticky; top:0; background:linear-gradient(180deg, rgba(20,20,34,.9), rgba(20,20,34,.6), transparent); backdrop-filter: blur(8px); border-bottom:1px solid rgba(255,255,255,.06) }
+.nav{ display:flex; align-items:center; justify-content:space-between; padding:16px 24px; position:sticky; top:0; z-index:1000; background:linear-gradient(180deg, rgba(20,20,34,.9), rgba(20,20,34,.6), transparent); backdrop-filter: blur(8px); border-bottom:1px solid rgba(255,255,255,.06) }
 .nav .brand{ font-weight:800; letter-spacing:.12em; color:#fff }
 .nav .links a{ color:var(--muted); margin-left:16px; text-decoration:none; padding:6px 10px; border-radius:8px }
 .nav .links a.active{ background:rgba(124,58,237,.15); color:#fff }

@@ -2,20 +2,24 @@
 import { NavLink } from 'react-router-dom';
 import { api } from '../api/apiClient';
 import useFetch from '../hooks/useFetch';
+import ParticleCanvas from '../components/Shared/ParticleCanvas';
 
 export default function Home() {
   const { data } = useFetch(api.health, []);
   return (
-    <section className="page" id="hero" aria-label="Hero">
-      <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 16, padding: '36px 20px', background: 'radial-gradient(1200px 380px at 10% -10%, rgba(14,165,233,0.35) 0, rgba(14,165,233,0) 60%), radial-gradient(900px 300px at 90% 0%, rgba(124,58,237,0.35) 0, rgba(124,58,237,0) 60%), linear-gradient(180deg, #0b1020 0%, #0b1226 100%)', boxShadow: '0 20px 60px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
-        <GridOverlay />
-        <ParticleCanvas />
-        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+    <section className="page" id="hero" aria-label="Hero" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', overflow: 'hidden', background: 'radial-gradient(1200px 380px at 10% -10%, rgba(14,165,233,0.35) 0, rgba(14,165,233,0) 60%), radial-gradient(900px 300px at 90% 0%, rgba(124,58,237,0.35) 0, rgba(124,58,237,0) 60%), linear-gradient(180deg, #0b1020 0%, #0b1226 100%)', zIndex: 1 }}>
+      {/* Full-page background animation */}
+      <GridOverlay />
+      <ParticleCanvas />
+      
+      {/* Centered hero content */}
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px 20px', overflowY: 'auto' }}>
+        <div style={{ textAlign: 'center', maxWidth: '900px', width: '100%' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, padding: '8px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.06)', color: '#a7b0c0', fontWeight: 700, fontSize: 12, letterSpacing: 0.6 }}>
             <span style={{ width: 8, height: 8, borderRadius: 999, background: data ? '#30d158' : '#f59e0b', boxShadow: `0 0 0 6px ${data ? 'rgba(48,209,88,0.15)' : 'rgba(245,158,11,0.15)'}` }} />
             {data ? 'Backend Online' : 'Backend Connecting…'}
           </div>
-          <h1 style={{ margin: '14px 0 8px', color: '#ffffff', fontSize: 38, lineHeight: '44px', letterSpacing: 0.2 }}>TRACE Cyber Defense</h1>
+          <h1 style={{ margin: '14px 0 8px', color: '#ffffff', fontSize: 38, lineHeight: '44px', letterSpacing: 0.2 }}>TRACE-Threat Recognition And Cybersecurity Education</h1>
           <p style={{ margin: 0, color: '#a7b0c0' }}>Detect. Educate. Respond. Shield your organization from phishing threats.</p>
 
           <div style={{ marginTop: 18, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -25,26 +29,34 @@ export default function Home() {
             <NavLink to="/dashboard" style={{ textDecoration: 'none' }}>
               <button style={{ background: 'transparent', color: '#e5e7eb', border: '1px solid rgba(229,231,235,0.2)', borderRadius: 10, padding: '10px 14px', fontWeight: 800, cursor: 'pointer' }}>View Dashboard</button>
             </NavLink>
-          </div>
-          <div style={{ marginTop: 18, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <div style={{ minWidth: 140, padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: '#e5e7eb', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>
-              <div style={{ fontSize: 22, fontWeight: 800 }}>+25K</div>
-              <div className="subtle">Emails analyzed</div>
-            </div>
-            <div style={{ minWidth: 140, padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: '#e5e7eb', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>
-              <div style={{ fontSize: 22, fontWeight: 800 }}>98%</div>
-              <div className="subtle">Phish detection</div>
-            </div>
-            <div style={{ minWidth: 140, padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: '#e5e7eb', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>
-              <div style={{ fontSize: 22, fontWeight: 800 }}>1930</div>
-              <div className="subtle">SOS helpline ready</div>
-            </div>
+            <NavLink to="/simulate" style={{ textDecoration: 'none' }}>
+              <button style={{ background: 'linear-gradient(135deg,#0ea5e9,#7c3aed)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', fontWeight: 800, boxShadow: '0 10px 24px rgba(14,165,233,0.35)', cursor: 'pointer' }}>Simulate</button>
+            </NavLink>
           </div>
         </div>
+
+        {/* Statistics cards below hero content */}
+        <div style={{ marginTop: 48, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
+          <div style={{ minWidth: 140, padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: '#e5e7eb', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize: 22, fontWeight: 800 }}>+25K</div>
+            <div className="subtle">Emails analyzed</div>
+          </div>
+          <div style={{ minWidth: 140, padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: '#e5e7eb', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize: 22, fontWeight: 800 }}>98%</div>
+            <div className="subtle">Phish detection</div>
+          </div>
+          <div style={{ minWidth: 140, padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: '#e5e7eb', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize: 22, fontWeight: 800 }}>1930</div>
+            <div className="subtle">SOS helpline ready</div>
+          </div>
+        </div>
+
+        {/* Shield decoration */}
         <ShieldDecoration />
       </div>
 
-      <div className="grid3" style={{ marginTop: 16 }}>
+      {/* Feature cards section */}
+      <div className="grid3" style={{ marginTop: 'auto', padding: '40px 20px', position: 'relative', zIndex: 1, width: '100%' }}>
         <div className="card" style={{ overflow: 'hidden' }}>
           <div className="subtle" style={{ fontWeight: 700, color: '#7c3aed' }}>Real‑time Threat Intel</div>
           <h3 style={{ marginTop: 6 }}>Spot phishing patterns before they spread</h3>
@@ -58,7 +70,7 @@ export default function Home() {
         <div className="card" style={{ overflow: 'hidden' }}>
           <div className="subtle" style={{ fontWeight: 700, color: '#ff3b30' }}>SOS Response</div>
           <h3 style={{ marginTop: 6 }}>One‑tap emergency reporting</h3>
-          <p className="subtle">Instant defensive actions and links to India’s cybercrime helpline/portal.</p>
+          <p className="subtle">Instant defensive actions and links to India's cybercrime helpline/portal.</p>
         </div>
       </div>
     </section>
@@ -67,7 +79,7 @@ export default function Home() {
 
 function GridOverlay() {
   return (
-    <div aria-hidden style={{ position: 'absolute', inset: 0, opacity: 0.25 }}>
+    <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh', opacity: 0.25, zIndex: 0, pointerEvents: 'none' }}>
       <svg width="100%" height="100%" preserveAspectRatio="none">
         <defs>
           <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -82,7 +94,7 @@ function GridOverlay() {
 
 function ShieldDecoration() {
   return (
-    <div aria-hidden style={{ position: 'absolute', right: -30, bottom: -24, width: 220, height: 220, filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.35))', opacity: 0.9 }}>
+    <div aria-hidden style={{ position: 'absolute', right: '5%', top: '50%', transform: 'translateY(-50%)', width: 220, height: 220, filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.35))', opacity: 0.9, zIndex: 0 }}>
       <svg viewBox="0 0 200 200" width="100%" height="100%">
         <defs>
           <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
@@ -99,91 +111,3 @@ function ShieldDecoration() {
   );
 }
 
-function ParticleCanvas() {
-  const canvasRef = React.useRef(null);
-
-  React.useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let raf;
-    const particles = [];
-
-    function init() {
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      const count = Math.floor((w * h) / 14000); // density-based
-      particles.length = 0;
-      for (let i = 0; i < count; i++) {
-        particles.push({
-          x: Math.random() * w,
-          y: Math.random() * h,
-          vx: (Math.random() - 0.5) * 0.6,
-          vy: (Math.random() - 0.5) * 0.6,
-          r: 1 + Math.random() * 1.6
-        });
-      }
-    }
-
-    function draw(t) {
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w; canvas.height = h;
-        init();
-      }
-      ctx.clearRect(0,0,w,h);
-      // draw connections first (thin lines)
-      for (let i = 0; i < particles.length; i++) {
-        const a = particles[i];
-        for (let j = i + 1; j < particles.length; j++) {
-          const b = particles[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const d2 = dx*dx + dy*dy;
-          if (d2 < 120*120) {
-            const alpha = Math.max(0, 0.25 - d2 / (120*120) * 0.25);
-            const hue = 200 + 60 * Math.sin(t/3000 + (i*0.13));
-            ctx.strokeStyle = `hsla(${hue}, 80%, 60%, ${alpha})`;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          }
-        }
-      }
-      // draw particles
-      for (const p of particles) {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-        const hue = 190 + 80 * Math.sin((t/2000) + p.x * 0.002 + p.y * 0.002);
-        ctx.fillStyle = `hsla(${hue}, 90%, 70%, 0.9)`;
-        ctx.shadowColor = `hsla(${hue}, 100%, 70%, 0.6)`;
-        ctx.shadowBlur = 8;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // move
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < -10) p.x = w + 10; if (p.x > w + 10) p.x = -10;
-        if (p.y < -10) p.y = h + 10; if (p.y > h + 10) p.y = -10;
-      }
-      raf = requestAnimationFrame(draw);
-    }
-
-    raf = requestAnimationFrame(draw);
-    const onResize = () => { init(); };
-    window.addEventListener('resize', onResize);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', opacity: 0.9, pointerEvents: 'none' }}
-      aria-hidden
-    />
-  );
-}
