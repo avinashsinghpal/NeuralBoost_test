@@ -628,91 +628,34 @@ This email was generated automatically by our security system. Please do not rep
   }
 }
 
-async function trackToken(req, res, next) {
-  let found = null;
-  let deviceInfo = { deviceType: 'Unknown', os: 'Unknown', browser: 'Unknown' };
-  let ip = '';
+function trackToken(req, res, next) {
+  // CRITICAL: Send response immediately to prevent timeouts
+  // We'll handle database operations asynchronously without blocking the response
+  console.log('[trackToken] ========== CLICK DETECTED ==========');
+  const { token } = req.params;
+  console.log('[trackToken] Token from URL:', token);
   
-  try {
-    console.log('[trackToken] ========== CLICK DETECTED ==========');
-    const { token } = req.params;
-    console.log('[trackToken] Token from URL:', token);
-    
-    const ua = req.get('user-agent') || '';
-    console.log('[trackToken] User-Agent:', ua);
-    
-    // Get IP address (check for proxy headers)
-    ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-         req.headers['x-real-ip'] ||
-         req.ip ||
-         req.connection?.remoteAddress ||
-         req.socket?.remoteAddress ||
-         req.socket?.remoteAddress?.replace('::ffff:', '') ||
-         '';
-    console.log('[trackToken] IP Address:', ip);
-    
-    // Parse device information
-    deviceInfo = parseDeviceInfo(ua);
-    console.log('[trackToken] Parsed device info:', deviceInfo);
-    
-    try {
-      found = findRecipientByToken(token);
-      console.log('[trackToken] Found recipient:', found ? {
-        contact: found.recipient.contact,
-        name: found.recipient.name,
-        id: found.recipient.id
-      } : 'NOT FOUND');
-    } catch (findErr) {
-      console.error('[trackToken] Error finding recipient:', findErr);
-      // Continue to show landing page even if lookup fails
-    }
-    
-    const details = { 
-      ua, 
-      ip,
-      deviceType: deviceInfo.deviceType,
-      os: deviceInfo.os,
-      browser: deviceInfo.browser
-    };
-    console.log('[trackToken] Details to save:', details);
-    
-    if (found) {
-      try {
-        console.log('[trackToken] Calling markRecipientClicked...');
-        markRecipientClicked(token, details);
-        console.log(`[trackToken] ✅ Successfully recorded click for ${found.recipient.contact} (token: ${token})`);
-        console.log(`[trackToken] Device: ${deviceInfo.deviceType} | OS: ${deviceInfo.os} | Browser: ${deviceInfo.browser} | IP: ${ip}`);
-      } catch (dbErr) {
-        console.error(`[trackToken] ❌ Failed to save click to database:`, dbErr);
-        console.error(`[trackToken] Error message:`, dbErr.message);
-        console.error(`[trackToken] Error stack:`, dbErr.stack);
-        console.error(`[trackToken] Error details:`, {
-          token,
-          recipient: found?.recipient?.contact || 'unknown',
-          error: dbErr.message
-        });
-        // Still show the landing page even if DB save fails
-      }
-    } else {
-      console.warn(`[trackToken] ⚠️ Unknown token clicked: ${token}`);
-      // Log unknown token attempts for security monitoring
-      // (We don't store them in the database since there's no recipient record)
-      console.log(`[trackToken] Unknown token attempt - IP: ${ip}, Device: ${deviceInfo.deviceType}, OS: ${deviceInfo.os}, Browser: ${deviceInfo.browser}`);
-    }
-    
-    console.log('[trackToken] ========== END ==========');
-  } catch (err) {
-    console.error('[trackToken] ❌ FATAL ERROR:', err);
-    console.error('[trackToken] Error stack:', err.stack);
-    // Don't call next(err) - always show landing page
-  }
+  // Parse device info and get IP immediately (synchronous operations)
+  const ua = req.get('user-agent') || '';
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+             req.headers['x-real-ip'] ||
+             req.ip ||
+             req.connection?.remoteAddress ||
+             req.socket?.remoteAddress ||
+             (req.socket?.remoteAddress ? req.socket.remoteAddress.replace('::ffff:', '') : '') ||
+             '';
+  const deviceInfo = parseDeviceInfo(ua);
   
-  // Always show the landing page, even if there was an error or unknown token
+  console.log('[trackToken] User-Agent:', ua);
+  console.log('[trackToken] IP Address:', ip);
+  console.log('[trackToken] Parsed device info:', deviceInfo);
+  
+  // Send the landing page immediately - don't wait for database operations
   try {
-    return phishedLanding(req, res, found);
+    phishedLanding(req, res, null);
   } catch (landingErr) {
     console.error('[trackToken] ❌ Error rendering landing page:', landingErr);
-    // Fallback: send a simple HTML response
+    // Ultimate fallback
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(200).end(`<!doctype html>
 <html>
@@ -753,14 +696,73 @@ async function trackToken(req, res, next) {
   </div>
 </body>
 </html>`);
+    return;
   }
+  
+  // Handle database operations asynchronously AFTER response is sent
+  // Use setImmediate to ensure response is sent first
+  setImmediate(() => {
+    try {
+      let found = null;
+      try {
+        found = findRecipientByToken(token);
+        console.log('[trackToken] Found recipient:', found ? {
+          contact: found.recipient.contact,
+          name: found.recipient.name,
+          id: found.recipient.id
+        } : 'NOT FOUND');
+      } catch (findErr) {
+        console.error('[trackToken] Error finding recipient:', findErr);
+      }
+      
+      const details = { 
+        ua, 
+        ip,
+        deviceType: deviceInfo.deviceType,
+        os: deviceInfo.os,
+        browser: deviceInfo.browser
+      };
+      
+      if (found) {
+        try {
+          console.log('[trackToken] Calling markRecipientClicked...');
+          markRecipientClicked(token, details);
+          console.log(`[trackToken] ✅ Successfully recorded click for ${found.recipient.contact} (token: ${token})`);
+          console.log(`[trackToken] Device: ${deviceInfo.deviceType} | OS: ${deviceInfo.os} | Browser: ${deviceInfo.browser} | IP: ${ip}`);
+        } catch (dbErr) {
+          console.error(`[trackToken] ❌ Failed to save click to database:`, dbErr);
+          console.error(`[trackToken] Error message:`, dbErr.message);
+          console.error(`[trackToken] Error stack:`, dbErr.stack);
+        }
+      } else {
+        console.warn(`[trackToken] ⚠️ Unknown token clicked: ${token}`);
+        console.log(`[trackToken] Unknown token attempt - IP: ${ip}, Device: ${deviceInfo.deviceType}, OS: ${deviceInfo.os}, Browser: ${deviceInfo.browser}`);
+      }
+      
+      console.log('[trackToken] ========== END ==========');
+    } catch (err) {
+      console.error('[trackToken] ❌ ERROR in async processing:', err);
+      console.error('[trackToken] Error stack:', err.stack);
+    }
+  });
 }
 
 function phishedLanding(req, res, recipientInfo) {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  // Ensure headers are set (they might already be set by trackToken)
+  if (!res.headersSent) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  
   const ua = req.get('user-agent') || '';
   const deviceInfo = parseDeviceInfo(ua);
   
+  // Set status code and send response
+  if (!res.headersSent) {
+    res.status(200);
+  }
   res.end(`<!doctype html>
   <html>
   <head>
