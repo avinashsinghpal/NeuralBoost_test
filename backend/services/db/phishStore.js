@@ -13,6 +13,7 @@ async function saveEvent(event) {
 
 function getTrackedUrlBase(req) {
   // Check for explicit public URL in environment (highest priority)
+  // This is the RECOMMENDED approach to avoid IP address changes
   if (process.env.TRACE_PUBLIC_URL) {
     const url = process.env.TRACE_PUBLIC_URL.replace(/\/$/, ''); // Remove trailing slash
     console.log('[getTrackedUrlBase] Using TRACE_PUBLIC_URL from env:', url);
@@ -25,33 +26,67 @@ function getTrackedUrlBase(req) {
   let networkIP = null;
   
   // Find first non-internal IPv4 address
-  for (const name of Object.keys(networkInterfaces)) {
-    for (const iface of networkInterfaces[name]) {
-      if (iface.family === 'IPv4' && !iface.internal) {
-        networkIP = iface.address;
-        break;
+  // Prefer Wi-Fi/Ethernet interfaces over others
+  const preferredInterfaces = ['Wi-Fi', 'Ethernet', 'wlan0', 'eth0', 'en0'];
+  const interfaceNames = Object.keys(networkInterfaces);
+  
+  // First, try preferred interfaces
+  for (const preferred of preferredInterfaces) {
+    const ifaceName = interfaceNames.find(name => name.includes(preferred) || name.toLowerCase().includes(preferred.toLowerCase()));
+    if (ifaceName) {
+      for (const iface of networkInterfaces[ifaceName]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          networkIP = iface.address;
+          console.log('[getTrackedUrlBase] Found IP from preferred interface:', ifaceName, networkIP);
+          break;
+        }
       }
+      if (networkIP) break;
     }
-    if (networkIP) break;
   }
   
-  // If we have a network IP and the request is from localhost, use network IP
+  // If no preferred interface found, use first available
+  if (!networkIP) {
+    for (const name of Object.keys(networkInterfaces)) {
+      for (const iface of networkInterfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          networkIP = iface.address;
+          break;
+        }
+      }
+      if (networkIP) break;
+    }
+  }
+  
   const proto = req.headers['x-forwarded-proto'] || req.protocol || 'http';
   const requestHost = req.headers['x-forwarded-host'] || req.get('host') || 'localhost:5001';
+  const PORT = process.env.PORT || 5001;
   
-  console.log('[getTrackedUrlBase] Request host:', requestHost, '| Network IP:', networkIP);
+  console.log('[getTrackedUrlBase] Request host:', requestHost, '| Network IP:', networkIP, '| Port:', PORT);
   
-  // If request is from localhost but we have a network IP, use network IP
-  if (networkIP && (requestHost.includes('localhost') || requestHost.includes('127.0.0.1'))) {
-    const url = `${proto}://${networkIP}:5001`;
+  // If request is from localhost/127.0.0.1 and we have a network IP, use network IP
+  // This ensures emails sent from localhost use the network IP that others can access
+  if (networkIP && (requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || !requestHost.includes('.'))) {
+    const url = `${proto}://${networkIP}:${PORT}`;
     console.log('[getTrackedUrlBase] Using auto-detected network IP:', url);
+    console.log('[getTrackedUrlBase] ⚠️  NOTE: IP addresses can change! Set TRACE_PUBLIC_URL in .env for stable URLs.');
     return url;
   }
   
-  // Otherwise, use the request host (works for both local and network access)
-  const url = `${proto}://${requestHost}`;
-  console.log('[getTrackedUrlBase] Using request host:', url);
-  return url;
+  // If request host is already an IP or domain, use it
+  // Remove port if it's already in the host
+  let host = requestHost;
+  if (host.includes(':')) {
+    // Host already has port, use as-is
+    const url = `${proto}://${host}`;
+    console.log('[getTrackedUrlBase] Using request host (with port):', url);
+    return url;
+  } else {
+    // Host doesn't have port, add it
+    const url = `${proto}://${host}:${PORT}`;
+    console.log('[getTrackedUrlBase] Using request host (added port):', url);
+    return url;
+  }
 }
 
 function findRecipientByToken(token) {
